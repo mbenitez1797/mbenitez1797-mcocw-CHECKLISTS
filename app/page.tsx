@@ -5,6 +5,8 @@ import useSWR, { mutate } from 'swr'
 import { ReportUpload } from '@/components/report-upload'
 import { ForecastTable } from '@/components/forecast-table'
 import { SummaryCards } from '@/components/summary-cards'
+import { DataValidationReport } from '@/components/data-validation-report'
+import { ReconciliationReport } from '@/components/reconciliation-report'
 import { 
   Upload, 
   BarChart3, 
@@ -17,7 +19,7 @@ import type { HousekeepingForecast, UploadResult } from '@/lib/types'
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
-type Tab = 'upload' | 'dashboard' | 'data'
+type Tab = 'upload' | 'dashboard' | 'data' | 'validation' | 'reconciliation'
 
 interface SummaryData {
   date: string
@@ -99,6 +101,8 @@ export default function HomePage() {
     { id: 'upload' as Tab, label: 'Upload Report', icon: Upload },
     { id: 'dashboard' as Tab, label: 'Dashboard', icon: BarChart3 },
     { id: 'data' as Tab, label: 'All Data', icon: Table },
+    { id: 'validation' as Tab, label: 'Data Validation', icon: AlertTriangle },
+    { id: 'reconciliation' as Tab, label: 'Reconciliation', icon: BarChart3 },
   ]
 
   return (
@@ -275,6 +279,35 @@ export default function HomePage() {
               onDelete={handleDeleteForecast}
               isLoading={forecastLoading}
             />
+          </div>
+        )}
+
+        {/* Validation Tab */}
+        {activeTab === 'validation' && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Data Validation</h2>
+              <p className="text-muted-foreground">
+                Validate the integrity and accuracy of your housekeeping forecast data. 
+                This tool checks for common errors and inconsistencies.
+              </p>
+            </div>
+
+            <DataValidationReport />
+          </div>
+        )}
+
+        {/* Reconciliation Tab */}
+        {activeTab === 'reconciliation' && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Reconciliation Report</h2>
+              <p className="text-muted-foreground">
+                Compare current data with previous uploads to identify changes and verify data integrity.
+              </p>
+            </div>
+
+            <ReconciliationReport />
           </div>
         )}
       </main>

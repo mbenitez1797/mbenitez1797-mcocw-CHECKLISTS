@@ -1,0 +1,51 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "target": "ES6",
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "_AUTO_PATCH_BACKUPS",
+    "UPDATES",
+    "full",
+    "components/checklist-form.tsx",
+    "components/am-checklist-form.tsx",
+    "components/agm-checklist-form.tsx",
+    "components/admin-checklist-form.tsx",
+    "components/gm-checklist-form.tsx",
+    "components/night-checklist-form.tsx",
+    "components/sales-checklist-form.tsx"
+  ]
+}

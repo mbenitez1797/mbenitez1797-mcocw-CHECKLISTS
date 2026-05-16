@@ -43,11 +43,6 @@ export const pmsInstructions: Record<string, string[]> = {
     "Filter for Vacant Ready rooms",
     "Review available rooms by room type"
   ],
-  "reviewedDirtyRooms": [
-    "Go to Stay PMS > Rooms Mgmt or Housekeeping view",
-    "Filter room status to Dirty",
-    "Review rooms still needing service"
-  ],
   "reviewedOutOfOrderRooms": [
     "Go to Stay PMS > Dashboard or Rooms Mgmt",
     "Filter room status to Out of Order",
@@ -167,21 +162,11 @@ export const pmsInstructions: Record<string, string[]> = {
   ],
 
   // ===== AM SECTION 4: OPEN BALANCE / LEDGER REVIEW =====
-  "reviewedInHouseBalances": [
-    "Go to Stay PMS > Front Desk/Home page > In-House tile",
-    "Open reservations with balance concerns",
-    "Select Payment tile",
-    "Review folio balances"
-  ],
   "reviewedDeparturesWithBalances": [
     "Go to Departures tile",
     "Look for balances due",
     "Open reservation > Payment tile",
     "Confirm balance and action needed"
-  ],
-  "reviewedCheckedOutOpenBalances": [
-    "Go to Dashboard > Ledgers > City Ledger > Reservations",
-    "Review checked-out, cancelled, or no-show reservations with outstanding balances"
   ],
   "reviewedCityLedger": [
     "Go to Dashboard > Ledgers > City Ledger > Reservations",
@@ -596,10 +581,6 @@ export const pmsInstructions: Record<string, string[]> = {
   "documentedRoomMovesAM": [
     "Review room move notes and reservations",
     "List guest name, current room, needed room type, reason, and status"
-  ],
-  "documentedGuestIssuesAM": [
-    "Review unresolved guest issues",
-    "List guest name, room number, issue, what was done, and what PM needs to do"
   ],
   "documentedBillingPaymentIssuesAM": [
     "Review unresolved payment/profile/billing list",

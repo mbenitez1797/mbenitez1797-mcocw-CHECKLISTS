@@ -168,7 +168,7 @@ async function ocrDocumentFile(file: File, onProgress: (message: string) => void
 
     canvas.width = viewport.width
     canvas.height = viewport.height
-    await page.render({ canvasContext: context, viewport }).promise
+    await page.render({ canvas, canvasContext: context, viewport }).promise
 
     const result = await tesseract.recognize(canvas, "eng", {
       logger: (message: { status?: string; progress?: number }) => {

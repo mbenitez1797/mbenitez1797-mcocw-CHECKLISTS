@@ -38,6 +38,7 @@
   "exclude": [
     "node_modules",
     "_AUTO_PATCH_BACKUPS",
+    "_disabled-routes",
     "UPDATES",
     "full",
     "components/checklist-form.tsx",

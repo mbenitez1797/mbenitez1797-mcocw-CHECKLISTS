@@ -12,12 +12,10 @@ import { FormProgress } from "@/components/form-progress"
 import { ChecklistTask, ChecklistSection } from "@/components/checklist-task"
 import { ChecklistActions } from "@/components/checklist-actions"
 import { useChecklistSubmit } from "@/hooks/use-checklist-submit"
-import { ChevronLeft, ChevronRight, CheckCircle2, Send, Save, Home, Loader2, AlertCircle, Monitor, Users, CreditCard, MessageSquare, Building2, Scale } from "lucide-react"
+import { ChevronLeft, ChevronRight, CheckCircle2, Send, Save, Home, Loader2, AlertCircle, Monitor, CreditCard, MessageSquare, Building2, BarChart3 } from "lucide-react"
 import { agmStreamlinedSchema, type AGMStreamlinedFormData, agmTasks } from "@/lib/streamlined-schemas"
-import { HouseBalancerSection } from "@/components/house-balancer-section"
 
-// AGM-specific steps (includes House Balancer as first step)
-const AGM_STEPS = ["House Balance", "Snapshot", "Priority Review", "Critical Tasks", "Issues", "Handoff", "Final"]
+const AGM_STEPS = ["Availability", "Snapshot", "Priority Review", "Critical Tasks", "Issues", "Handoff", "Final"]
 
 const STORAGE_KEY = "agm-streamlined-checklist-draft"
 
@@ -58,7 +56,6 @@ export function StreamlinedAGMForm() {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [saveMessage, setSaveMessage] = useState("")
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [houseBalanceComplete, setHouseBalanceComplete] = useState(false)
   const { submit, isSubmitting, result } = useChecklistSubmit()
 
   const form = useForm<AGMStreamlinedFormData>({ resolver: zodResolver(agmStreamlinedSchema), defaultValues })
@@ -123,14 +120,18 @@ export function StreamlinedAGMForm() {
 
       {/* Step 0: House Balance */}
       {currentStep === 0 && (
-        <ChecklistSection title="House Balance" description="Manage daily inventory and resolve oversold categories">
-          <HouseBalancerSection onBalanceComplete={() => setHouseBalanceComplete(true)} />
-          {houseBalanceComplete && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-              <span className="text-green-700 font-medium">House balance confirmed - proceed to next step</span>
-            </div>
-          )}
+        <ChecklistSection title="Availability Dashboard" description="Review inventory and parser output in the isolated dashboard">
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="text-sm text-muted-foreground">
+              Forecast parsing and Smart Balancer tools are isolated from this AGM checklist so the checklist remains usable if saved availability data is missing or corrupted.
+            </p>
+            <Button asChild className="mt-4">
+              <Link href="/availability">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Open Availability Dashboard
+              </Link>
+            </Button>
+          </div>
         </ChecklistSection>
       )}
 

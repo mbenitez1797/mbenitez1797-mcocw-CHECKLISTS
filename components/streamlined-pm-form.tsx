@@ -11,8 +11,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { FormProgress } from "@/components/form-progress"
 import { ChecklistTask, ChecklistSection } from "@/components/checklist-task"
 import { ChecklistActions } from "@/components/checklist-actions"
+import { ChecklistCompletionProgress } from "@/components/checklist-completion-progress"
+import { useChecklistAutosave } from "@/hooks/use-checklist-autosave"
 import { useChecklistSubmit } from "@/hooks/use-checklist-submit"
-import { ChevronLeft, ChevronRight, CheckCircle2, Send, Save, Home, Loader2, AlertCircle, Monitor, Users, MessageSquare, FileText } from "lucide-react"
+import { ChevronLeft, ChevronRight, CheckCircle2, Send, Save, Home, Loader2, AlertCircle, Monitor, Users, CreditCard, MessageSquare, FileText } from "lucide-react"
 import {
   pmStreamlinedSchema,
   type PMStreamlinedFormData,
@@ -22,28 +24,17 @@ import {
 
 const STORAGE_KEY = "pm-streamlined-checklist-draft"
 
-const gxpCaseManagementTask = {
-  id: pmTasks.createUpdateGXP.id,
-  label: "Manage GXP/GPS cases, recognition, and unresolved requests",
-  instruction:
-    "Open GXP and GPS during PM operations. Review open guest and associate-facing cases, requests, defects, CEC items, amenities, mobile/chat requests, and arrivals with prior issues or preferences. Create/update cases, assign owners, manage response times, close resolved items within priority standards, and keep CEC cases on track for 72-hour resolution. Use GXP reports/dashboards to identify repeat defects or service trends for handoff.",
-  expandedInstruction:
-    "Minimum GXP/GPS standard: manage guest-related cases such as amenities, service requests, guest-identified defects, and problem resolution; manage property-related cases such as Bonvoy support, associate-reported requests, product defects, security incidents, and work orders; review GPS Highly Actionable arrivals, repeat guest history, preferences, previous service opportunities, and negative case history; use reports and dashboards to identify recurring issues and include unresolved trends in night audit handoff.",
-  systems: pmTasks.createUpdateGXP.systems,
-}
-
 const pmSystems = [
   { name: "Stay PMS", icon: Monitor, description: "Reservations, rooms, folios" },
   { name: "GXP", icon: MessageSquare, description: "Guest requests & issues" },
   { name: "GPS", icon: Users, description: "Guest profiles & preferences" },
-  { name: "Reports", icon: FileText, description: "GXP dashboards & trends" },
 ]
 
 function QuickReferenceCard() {
   return (
     <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
       <h3 className="text-sm font-semibold text-foreground mb-3">Quick Reference - Key Systems</h3>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {pmSystems.map((system) => (
           <div key={system.name} className="flex items-center gap-2 text-sm">
             <system.icon className="h-4 w-4 text-primary shrink-0" />
@@ -68,9 +59,11 @@ const defaultValues: PMStreamlinedFormData = {
   reviewRemainingArrivals: false,
   reviewPriorityArrivals: false,
   reviewMobileKeyVAL: false,
+  mobileCheckinPriorityRooms: false,
   completeCheckIns: false,
   monitorRoomStatus: false,
   createUpdateGXP: false,
+  collectDepositsIncidentals: false,
   reviewPaymentFolio: false,
   reviewLateArrivals: false,
   confirmNoUnnecessaryAssignments: false,
@@ -94,6 +87,12 @@ export function StreamlinedPMForm() {
   })
 
   const { control, handleSubmit, watch, setValue, reset } = form
+  const autosave = useChecklistAutosave({
+    checklistType: "pm",
+    storageKey: STORAGE_KEY,
+    form,
+    tasks: pmTasks,
+  })
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -112,12 +111,14 @@ export function StreamlinedPMForm() {
   const saveProgress = () => {
     const data = form.getValues()
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    autosave.saveNow()
     setSaveMessage("Progress saved!")
     setTimeout(() => setSaveMessage(""), 3000)
   }
 
   const clearSavedProgress = () => {
     localStorage.removeItem(STORAGE_KEY)
+    autosave.clearDraft()
   }
 
   const nextStep = () => {
@@ -228,6 +229,11 @@ export function StreamlinedPMForm() {
       </div>
 
       <FormProgress currentStep={currentStep} totalSteps={STREAMLINED_STEPS.length} stepLabels={STREAMLINED_STEPS} />
+      <ChecklistCompletionProgress
+        title="PM Checklist"
+        completed={autosave.completedTasks.length}
+        total={Object.keys(pmTasks).length}
+      />
 
       {/* Step 0: Snapshot */}
       {currentStep === 0 && (
@@ -310,6 +316,17 @@ export function StreamlinedPMForm() {
               onCheckedChange={field.onChange}
             />
           )} />
+
+          <Controller name="mobileCheckinPriorityRooms" control={control} render={({ field }) => (
+            <ChecklistTask
+              id={pmTasks.mobileCheckinPriorityRooms.id}
+              label={pmTasks.mobileCheckinPriorityRooms.label}
+              instruction={pmTasks.mobileCheckinPriorityRooms.instruction}
+              systems={pmTasks.mobileCheckinPriorityRooms.systems}
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+          )} />
         </ChecklistSection>
       )}
 
@@ -340,11 +357,21 @@ export function StreamlinedPMForm() {
 
           <Controller name="createUpdateGXP" control={control} render={({ field }) => (
             <ChecklistTask
-              id={gxpCaseManagementTask.id}
-              label={gxpCaseManagementTask.label}
-              instruction={gxpCaseManagementTask.instruction}
-              expandedInstruction={gxpCaseManagementTask.expandedInstruction}
-              systems={gxpCaseManagementTask.systems}
+              id={pmTasks.createUpdateGXP.id}
+              label={pmTasks.createUpdateGXP.label}
+              instruction={pmTasks.createUpdateGXP.instruction}
+              systems={pmTasks.createUpdateGXP.systems}
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+          )} />
+
+          <Controller name="collectDepositsIncidentals" control={control} render={({ field }) => (
+            <ChecklistTask
+              id={pmTasks.collectDepositsIncidentals.id}
+              label={pmTasks.collectDepositsIncidentals.label}
+              instruction={pmTasks.collectDepositsIncidentals.instruction}
+              systems={pmTasks.collectDepositsIncidentals.systems}
               checked={field.value}
               onCheckedChange={field.onChange}
             />
@@ -479,5 +506,6 @@ export function StreamlinedPMForm() {
     </form>
   )
 }
+
 
 

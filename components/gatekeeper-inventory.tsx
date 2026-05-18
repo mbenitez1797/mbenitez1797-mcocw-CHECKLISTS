@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { Lock, Unlock, AlertTriangle, CheckCircle2, Monitor, Info } from "lucide-react"
+import { SmartUpload } from "@/components/smart-upload"
 
 interface GatekeeperInventoryProps {
   shift: ShiftType
@@ -24,6 +25,7 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
     kingTotal,
     queensTotal,
     vikgTotal,
+    viqnTotal,
     suitesTotal,
     grandTotal,
     nightAuditPhase,
@@ -32,6 +34,7 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
     tomorrowKingTotal,
     tomorrowQueensTotal,
     tomorrowVikgTotal,
+    tomorrowViqnTotal,
     tomorrowSuitesTotal,
     tomorrowGrandTotal,
   } = useInventory()
@@ -48,7 +51,7 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
 
   const handleInputChange = (code: string, value: string) => {
     const numValue = value === "" ? 0 : parseInt(value, 10)
-    if (!isNaN(numValue) && numValue >= 0) {
+    if (!isNaN(numValue)) {
       updateInventory(code, numValue)
     }
   }
@@ -56,7 +59,7 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
   const validateAndUnlock = () => {
     // Check if at least some inventory has been entered
     const hasAnyData = Object.values(currentInventory).some(v => v > 0)
-    
+
     if (!hasAnyData) {
       setValidationError("Please enter room availability before unlocking the checklist.")
       return
@@ -70,7 +73,7 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
   const handlePhase2Submit = () => {
     // Validate tomorrow's inventory
     const hasAnyData = Object.values(tomorrowInventory).some(v => v > 0)
-    
+
     if (!hasAnyData) {
       setValidationError("Please enter tomorrow's availability before completing the audit.")
       return
@@ -82,26 +85,32 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
 
   // Room code groups
   const roomGroups = [
-    { 
-      name: "KING Rooms", 
+    {
+      name: "KING Rooms",
       codes: ROOM_CODES.KING,
       description: "Standard king bed rooms",
       color: "border-blue-200 bg-blue-50/50",
     },
-    { 
-      name: "QUEENS Rooms", 
+    {
+      name: "QNQN Rooms",
       codes: ROOM_CODES.QUEENS,
       description: "Double queen bed rooms",
       color: "border-emerald-200 bg-emerald-50/50",
     },
-    { 
-      name: "VIKG", 
+    {
+      name: "VIKG",
       codes: ROOM_CODES.VIKG,
       description: "View king rooms",
       color: "border-amber-200 bg-amber-50/50",
     },
-    { 
-      name: "SUITES", 
+    {
+      name: "VIQN",
+      codes: ROOM_CODES.VIQN,
+      description: "View queen rooms",
+      color: "border-cyan-200 bg-cyan-50/50",
+    },
+    {
+      name: "SUIT",
       codes: ROOM_CODES.SUITES,
       description: "Suite accommodations",
       color: "border-purple-200 bg-purple-50/50",
@@ -123,22 +132,26 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-4 mt-4 pt-4 border-t border-emerald-200">
+        <div className="grid grid-cols-5 gap-4 mt-4 pt-4 border-t border-emerald-200">
           <div className="text-center">
             <div className="text-2xl font-bold text-emerald-700">{kingTotal}</div>
             <div className="text-xs text-emerald-600">KING</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-emerald-700">{queensTotal}</div>
-            <div className="text-xs text-emerald-600">QUEENS</div>
+            <div className="text-xs text-emerald-600">QNQN</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-emerald-700">{vikgTotal}</div>
             <div className="text-xs text-emerald-600">VIKG</div>
           </div>
           <div className="text-center">
+            <div className="text-2xl font-bold text-emerald-700">{viqnTotal}</div>
+            <div className="text-xs text-emerald-600">VIQN</div>
+          </div>
+          <div className="text-center">
             <div className="text-2xl font-bold text-emerald-700">{suitesTotal}</div>
-            <div className="text-xs text-emerald-600">SUITES</div>
+            <div className="text-xs text-emerald-600">SUIT</div>
           </div>
         </div>
         {isNightAudit && (
@@ -172,6 +185,9 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
           </div>
         </div>
 
+        {/* Smart Upload Section for Tomorrow */}
+        <SmartUpload isForTomorrow={true} />
+
         {/* Manual Input Section */}
         <div className="bg-indigo-100 border border-indigo-200 rounded-lg p-3 mb-4 flex items-start gap-2">
           <Monitor className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
@@ -204,7 +220,6 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
                     <Input
                       id={`tomorrow-${code}`}
                       type="number"
-                      min="0"
                       value={tomorrowInventory[code] || ""}
                       onChange={(e) => handleInputChange(code, e.target.value)}
                       className="mt-1 text-center font-semibold"
@@ -218,22 +233,26 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
         </div>
 
         {/* Tomorrow's Totals */}
-        <div className="grid grid-cols-5 gap-4 mb-6 p-4 bg-white rounded-lg border border-indigo-200">
+        <div className="grid grid-cols-6 gap-4 mb-6 p-4 bg-white rounded-lg border border-indigo-200">
           <div className="text-center">
             <div className="text-xl font-bold text-indigo-700">{tomorrowKingTotal}</div>
             <div className="text-xs text-slate-500">KING</div>
           </div>
           <div className="text-center">
             <div className="text-xl font-bold text-indigo-700">{tomorrowQueensTotal}</div>
-            <div className="text-xs text-slate-500">QUEENS</div>
+            <div className="text-xs text-slate-500">QNQN</div>
           </div>
           <div className="text-center">
             <div className="text-xl font-bold text-indigo-700">{tomorrowVikgTotal}</div>
             <div className="text-xs text-slate-500">VIKG</div>
           </div>
           <div className="text-center">
+            <div className="text-xl font-bold text-indigo-700">{tomorrowViqnTotal}</div>
+            <div className="text-xs text-slate-500">VIQN</div>
+          </div>
+          <div className="text-center">
             <div className="text-xl font-bold text-indigo-700">{tomorrowSuitesTotal}</div>
-            <div className="text-xs text-slate-500">SUITES</div>
+            <div className="text-xs text-slate-500">SUIT</div>
           </div>
           <div className="text-center border-l border-indigo-200">
             <div className="text-xl font-bold text-indigo-900">{tomorrowGrandTotal}</div>
@@ -272,6 +291,9 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
         </div>
       </div>
 
+      {/* Smart Upload Section */}
+      <SmartUpload isForTomorrow={false} />
+
       {/* Manual Input Section */}
       <div className="bg-white border border-amber-200 rounded-lg p-3 mb-4 flex items-start gap-2">
         <Monitor className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
@@ -304,7 +326,6 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
                   <Input
                     id={code}
                     type="number"
-                    min="0"
                     value={currentInventory[code] || ""}
                     onChange={(e) => handleInputChange(code, e.target.value)}
                     className="mt-1 text-center font-semibold"
@@ -318,22 +339,26 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
       </div>
 
       {/* Calculated Totals */}
-      <div className="grid grid-cols-5 gap-4 mb-6 p-4 bg-white rounded-lg border border-amber-200">
+      <div className="grid grid-cols-6 gap-4 mb-6 p-4 bg-white rounded-lg border border-amber-200">
         <div className="text-center">
           <div className="text-xl font-bold text-amber-700">{kingTotal}</div>
           <div className="text-xs text-slate-500">KING</div>
         </div>
         <div className="text-center">
           <div className="text-xl font-bold text-amber-700">{queensTotal}</div>
-          <div className="text-xs text-slate-500">QUEENS</div>
+          <div className="text-xs text-slate-500">QNQN</div>
         </div>
         <div className="text-center">
           <div className="text-xl font-bold text-amber-700">{vikgTotal}</div>
           <div className="text-xs text-slate-500">VIKG</div>
         </div>
         <div className="text-center">
+          <div className="text-xl font-bold text-amber-700">{viqnTotal}</div>
+          <div className="text-xs text-slate-500">VIQN</div>
+        </div>
+        <div className="text-center">
           <div className="text-xl font-bold text-amber-700">{suitesTotal}</div>
-          <div className="text-xs text-slate-500">SUITES</div>
+          <div className="text-xs text-slate-500">SUIT</div>
         </div>
         <div className="text-center border-l border-amber-200">
           <div className="text-xl font-bold text-amber-900">{grandTotal}</div>

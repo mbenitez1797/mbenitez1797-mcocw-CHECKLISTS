@@ -32,7 +32,6 @@ function RoomInput({ code, value, onChange, label }: RoomInputProps) {
       <Label className="w-24 text-sm font-mono text-slate-600 shrink-0">{code}</Label>
       <Input
         type="number"
-        min={0}
         value={value || ""}
         onChange={(e) => onChange(parseInt(e.target.value) || 0)}
         className="w-20 text-center font-mono"
@@ -93,10 +92,12 @@ export default function InventoryPage() {
     kingTotal,
     queensTotal,
     vikgTotal,
+    viqnTotal,
     suitesTotal,
     tomorrowKingTotal,
     tomorrowQueensTotal,
     tomorrowVikgTotal,
+    tomorrowViqnTotal,
     tomorrowSuitesTotal,
     isAuditMode,
     auditSet,
@@ -109,8 +110,8 @@ export default function InventoryPage() {
     clearAllInventory,
   } = useInventory()
 
-  const grandTotal = kingTotal + queensTotal + vikgTotal + suitesTotal
-  const tomorrowGrandTotal = tomorrowKingTotal + tomorrowQueensTotal + tomorrowVikgTotal + tomorrowSuitesTotal
+  const grandTotal = kingTotal + queensTotal + vikgTotal + viqnTotal + suitesTotal
+  const tomorrowGrandTotal = tomorrowKingTotal + tomorrowQueensTotal + tomorrowVikgTotal + tomorrowViqnTotal + tomorrowSuitesTotal
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-6">
@@ -251,7 +252,7 @@ export default function InventoryPage() {
             />
 
             <CategoryCard
-              title="QUEENS"
+              title="QNQN"
               icon={<BedDouble className="w-5 h-5 text-blue-600" />}
               codes={ROOM_CODES.QUEENS}
               inventory={todayInventory}
@@ -273,7 +274,18 @@ export default function InventoryPage() {
             />
 
             <CategoryCard
-              title="SUITES"
+              title="VIQN"
+              icon={<BedDouble className="w-5 h-5 text-cyan-600" />}
+              codes={ROOM_CODES.VIQN}
+              inventory={todayInventory}
+              onUpdate={updateTodayInventory}
+              total={viqnTotal}
+              colorClass="bg-cyan-100"
+              borderClass="border-cyan-200"
+            />
+
+            <CategoryCard
+              title="SUIT"
               icon={<Crown className="w-5 h-5 text-amber-600" />}
               codes={ROOM_CODES.SUITES}
               inventory={todayInventory}
@@ -317,7 +329,7 @@ export default function InventoryPage() {
             />
 
             <CategoryCard
-              title="QUEENS"
+              title="QNQN"
               icon={<BedDouble className="w-5 h-5 text-blue-600" />}
               codes={ROOM_CODES.QUEENS}
               inventory={tomorrowInventory}
@@ -339,7 +351,18 @@ export default function InventoryPage() {
             />
 
             <CategoryCard
-              title="SUITES"
+              title="VIQN"
+              icon={<BedDouble className="w-5 h-5 text-cyan-600" />}
+              codes={ROOM_CODES.VIQN}
+              inventory={tomorrowInventory}
+              onUpdate={updateTomorrowInventory}
+              total={tomorrowViqnTotal}
+              colorClass="bg-cyan-100"
+              borderClass="border-cyan-200"
+            />
+
+            <CategoryCard
+              title="SUIT"
               icon={<Crown className="w-5 h-5 text-amber-600" />}
               codes={ROOM_CODES.SUITES}
               inventory={tomorrowInventory}

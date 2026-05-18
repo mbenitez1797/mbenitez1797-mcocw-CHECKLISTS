@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { FormProgress } from "@/components/form-progress"
 import { ChecklistTask, ChecklistSection } from "@/components/checklist-task"
 import { ChecklistActions } from "@/components/checklist-actions"
+import { ChecklistCompletionProgress } from "@/components/checklist-completion-progress"
+import { useChecklistAutosave } from "@/hooks/use-checklist-autosave"
 import { useChecklistSubmit } from "@/hooks/use-checklist-submit"
 import { ChevronLeft, ChevronRight, CheckCircle2, Send, Save, Home, Loader2, AlertCircle, Monitor, MessageSquare, FileText, CreditCard } from "lucide-react"
 import {
@@ -59,6 +61,7 @@ const defaultValues: NightStreamlinedFormData = {
   reviewRoomInventory: false,
   reviewPaymentsFoliosCash: false,
   reviewGXPOvernight: false,
+  collectDepositsIncidentals: false,
   completeNoShowProcess: false,
   confirmPreAuditReadiness: false,
   completeNightAudit: false,
@@ -84,6 +87,12 @@ export function StreamlinedNightForm() {
   })
 
   const { control, handleSubmit, watch, setValue, reset } = form
+  const autosave = useChecklistAutosave({
+    checklistType: "night",
+    storageKey: STORAGE_KEY,
+    form,
+    tasks: nightTasks,
+  })
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -102,11 +111,12 @@ export function StreamlinedNightForm() {
   const saveProgress = () => {
     const data = form.getValues()
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    autosave.saveNow()
     setSaveMessage("Progress saved!")
     setTimeout(() => setSaveMessage(""), 3000)
   }
 
-  const clearSavedProgress = () => { localStorage.removeItem(STORAGE_KEY) }
+  const clearSavedProgress = () => { localStorage.removeItem(STORAGE_KEY); autosave.clearDraft() }
   const nextStep = () => { if (currentStep < STREAMLINED_STEPS.length - 1) setCurrentStep(currentStep + 1) }
   const prevStep = () => { if (currentStep > 0) setCurrentStep(currentStep - 1) }
 
@@ -206,6 +216,11 @@ export function StreamlinedNightForm() {
       </div>
 
       <FormProgress currentStep={currentStep} totalSteps={STREAMLINED_STEPS.length} stepLabels={STREAMLINED_STEPS} />
+      <ChecklistCompletionProgress
+        title="Night Audit Checklist"
+        completed={autosave.completedTasks.length}
+        total={Object.keys(nightTasks).length}
+      />
 
       {/* Step 0: Snapshot */}
       {currentStep === 0 && (
@@ -263,6 +278,10 @@ export function StreamlinedNightForm() {
 
           <Controller name="reviewGXPOvernight" control={control} render={({ field }) => (
             <ChecklistTask id={nightTasks.reviewGXPOvernight.id} label={nightTasks.reviewGXPOvernight.label} instruction={nightTasks.reviewGXPOvernight.instruction} systems={nightTasks.reviewGXPOvernight.systems} checked={field.value} onCheckedChange={field.onChange} />
+          )} />
+
+          <Controller name="collectDepositsIncidentals" control={control} render={({ field }) => (
+            <ChecklistTask id={nightTasks.collectDepositsIncidentals.id} label={nightTasks.collectDepositsIncidentals.label} instruction={nightTasks.collectDepositsIncidentals.instruction} systems={nightTasks.collectDepositsIncidentals.systems} checked={field.value} onCheckedChange={field.onChange} />
           )} />
         </ChecklistSection>
       )}

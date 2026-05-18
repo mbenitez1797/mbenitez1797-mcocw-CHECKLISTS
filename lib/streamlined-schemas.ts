@@ -28,10 +28,13 @@ export const amStreamlinedSchema = baseChecklistSchema.extend({
   reviewHouseSnapshot: z.boolean().default(false),
   // Step 2: Priority Review
   reviewDeparturesBalances: z.boolean().default(false),
+  collectScheduledDeposits: z.boolean().default(false),
+  collectDayOfDeposits: z.boolean().default(false),
   reviewPriorityArrivals: z.boolean().default(false),
   reviewRoomInventory: z.boolean().default(false),
   // Step 3: Critical Tasks
   coordinatePriorityRooms: z.boolean().default(false),
+  mobileCheckinPriorityRooms: z.boolean().default(false),
   reviewGXPRequests: z.boolean().default(false),
   reviewPaymentProfiles: z.boolean().default(false),
   reviewGroups: z.boolean().default(false),
@@ -58,10 +61,12 @@ export const pmStreamlinedSchema = baseChecklistSchema.extend({
   // Step 2: Priority Review
   reviewPriorityArrivals: z.boolean().default(false),
   reviewMobileKeyVAL: z.boolean().default(false),
+  mobileCheckinPriorityRooms: z.boolean().default(false),
   // Step 3: Critical Tasks
   completeCheckIns: z.boolean().default(false),
   monitorRoomStatus: z.boolean().default(false),
   createUpdateGXP: z.boolean().default(false),
+  collectDepositsIncidentals: z.boolean().default(false),
   reviewPaymentFolio: z.boolean().default(false),
   reviewLateArrivals: z.boolean().default(false),
   confirmNoUnnecessaryAssignments: z.boolean().default(false),
@@ -88,6 +93,7 @@ export const nightStreamlinedSchema = baseChecklistSchema.extend({
   // Step 2: Priority Review
   reviewPaymentsFoliosCash: z.boolean().default(false),
   reviewGXPOvernight: z.boolean().default(false),
+  collectDepositsIncidentals: z.boolean().default(false),
   // Step 3: Critical Tasks
   completeNoShowProcess: z.boolean().default(false),
   confirmPreAuditReadiness: z.boolean().default(false),
@@ -293,6 +299,18 @@ export const amTasks: Record<string, TaskDefinition> = {
     instruction: "Stay PMS > Departures tile > review due-outs, late checkouts, group departures, balances, routing, tax-exempt guests, and folio needs.",
     systems: ["Stay PMS", "Ledger"],
   },
+  collectScheduledDeposits: {
+    id: "collectScheduledDeposits",
+    label: "Batch collect scheduled deposits",
+    instruction: "Stay PMS > Front Desk > Batch Operations > Deposits To > Select All > Run. Review any deposits that kick back; Expedia and some same-day third-party reservations may not allow same-day charging, so note those exceptions for manual follow-up.",
+    systems: ["Stay PMS", "Ledger"],
+  },
+  collectDayOfDeposits: {
+    id: "collectDayOfDeposits",
+    label: "Collect day-of deposits and set incidental folios",
+    instruction: "Stay PMS > Front Desk > Batch Operations > Check-In > review the Subtype Card. Look for arrivals where subtype says Virtual Card or is blank, open each reservation, manually take the required payment or deposit, and set up the incidental folio through Routing Rules > Add Incidentals Only.",
+    systems: ["Stay PMS", "Ledger"],
+  },
   reviewPriorityArrivals: {
     id: "reviewPriorityArrivals",
     label: "Review priority arrivals",
@@ -311,11 +329,17 @@ export const amTasks: Record<string, TaskDefinition> = {
     instruction: "Share true priority rooms only with housekeeping: VIPs, early arrivals, accessibility rooms, connecting/adjoining rooms, suites, group rooms, service recovery rooms, late checkouts, and room moves.",
     systems: ["Stay PMS", "Rooms"],
   },
+  mobileCheckinPriorityRooms: {
+    id: "mobileCheckinPriorityRooms",
+    label: "Mobile check-in and prioritize rooms with housekeeping",
+    instruction: "Stay PMS > Dashboard > Digital Requests > Total Requests > sort by Status. Review each digital request, check arrival time, assign mobile check-ins with digital keys to VR rooms first, and tell Housekeeping how many of each room type are needed when rooms are not yet VR.",
+    systems: ["Stay PMS", "Rooms"],
+  },
   reviewGXPRequests: {
     id: "reviewGXPRequests",
-    label: "Review GXP open guest requests",
-    instruction: "Open GXP > filter Open/Pending/Needs Follow-Up cases > review guest name, room number, issue, owner, and due time > update or assign owner.",
-    systems: ["GXP"],
+    label: "Review GXP/GPS pre-arrival planning and open cases",
+    instruction: "Use GXP and GPS to manage guest requests, defects, problem resolution, amenities, CEC cases, work orders, and follow-up. Review guest and property cases by priority and response time, close resolved items within standards, track CEC cases within 72 hours, and use GPS for Highly Actionable arrivals, preferences, repeat history, prior service opportunities, and negative cases.",
+    systems: ["GXP", "GPS"],
   },
   reviewPaymentProfiles: {
     id: "reviewPaymentProfiles",
@@ -369,6 +393,12 @@ export const pmTasks: Record<string, TaskDefinition> = {
     instruction: "Stay PMS > open reservation > look for VAL badge > complete validation selections > Save & Issue Digital Key > avoid creating new physical key if it will revoke mobile key unless required.",
     systems: ["Stay PMS"],
   },
+  mobileCheckinPriorityRooms: {
+    id: "mobileCheckinPriorityRooms",
+    label: "Mobile check-in and prioritize rooms with housekeeping",
+    instruction: "Stay PMS > Dashboard > Digital Requests > Total Requests > sort by Status. Review every reservation, check arrival time, assign mobile check-ins with digital keys to VR rooms first, and tell Housekeeping how many of each room type are needed when rooms are not yet VR.",
+    systems: ["Stay PMS", "Rooms"],
+  },
   completeCheckIns: {
     id: "completeCheckIns",
     label: "Complete check-ins correctly",
@@ -383,9 +413,15 @@ export const pmTasks: Record<string, TaskDefinition> = {
   },
   createUpdateGXP: {
     id: "createUpdateGXP",
-    label: "Create or update GXP cases for guest issues",
-    instruction: "Open GXP > search guest by name/room > create or update case > enter issue, action taken, owner, due time, and status > include unresolved items in handoff.",
-    systems: ["GXP"],
+    label: "Manage GXP/GPS guest requests, defects, and follow-up",
+    instruction: "Use GXP and GPS to create, manage, and close guest requests, amenities, service defects, problem resolution, Marriott Bonvoy support cases, missing stay or redemption issues, associate-reported requests, product defects, security incidents, and work orders. Review priority and response time, track CEC cases within 72 hours, check GPS for Highly Actionable arrivals, and include trends or unresolved follow-up in handoff.",
+    systems: ["GXP", "GPS"],
+  },
+  collectDepositsIncidentals: {
+    id: "collectDepositsIncidentals",
+    label: "Collect deposits and prepare incidental folios",
+    instruction: "First collect scheduled deposits through Stay PMS > Front Desk > Batch Operations > Deposits To > Select All > Run. Review kicked-back deposits such as Expedia or same-day third-party reservations for manual follow-up. Then use Batch Operations > Check-In to review the Subtype Card, open Virtual Card or blank subtype arrivals, take required payment/deposit, and create the incidental folio through Routing Rules > Add Incidentals Only.",
+    systems: ["Stay PMS", "Ledger"],
   },
   reviewPaymentFolio: {
     id: "reviewPaymentFolio",
@@ -441,9 +477,15 @@ export const nightTasks: Record<string, TaskDefinition> = {
   },
   reviewGXPOvernight: {
     id: "reviewGXPOvernight",
-    label: "Review GXP overnight requests and guest issues",
-    instruction: "Open GXP > filter Open/Pending/Overdue cases > review overnight guest requests, complaints, wake-up calls if applicable, room issues, owner, and due time.",
-    systems: ["GXP"],
+    label: "Review GXP/GPS overnight cases, CEC follow-up, and unresolved requests",
+    instruction: "Review overnight guest issues, open GXP/GPS cases, CEC follow-up, unresolved requests, urgent defects, and work orders. Document unresolved items in AM handoff, confirm urgent defects are assigned or escalated, and flag any CEC item approaching the 72-hour deadline.",
+    systems: ["GXP", "GPS"],
+  },
+  collectDepositsIncidentals: {
+    id: "collectDepositsIncidentals",
+    label: "Collect deposits and prepare incidental folios",
+    instruction: "First collect scheduled deposits through Stay PMS > Front Desk > Batch Operations > Deposits To > Select All > Run. Review kicked-back deposits such as Expedia or same-day third-party reservations for manual follow-up. Then use Batch Operations > Check-In to review the Subtype Card, open Virtual Card or blank subtype arrivals, take required payment/deposit, and create the incidental folio through Routing Rules > Add Incidentals Only.",
+    systems: ["Stay PMS", "Ledger"],
   },
   completeNoShowProcess: {
     id: "completeNoShowProcess",

@@ -1,11 +1,11 @@
 "use client"
 
-import { MonthForecastDashboard } from "@/components/month-forecast-dashboard"
+import { MonthForecastDashboardV2 } from "@/components/month-forecast-dashboard-v2"
 
 interface HouseBalancerSectionProps {
   onBalanceComplete?: () => void
 }
 
 export function HouseBalancerSection({ onBalanceComplete }: HouseBalancerSectionProps) {
-  return <MonthForecastDashboard compact onForecastApplied={onBalanceComplete} />
+  return <MonthForecastDashboardV2 compact onForecastApplied={onBalanceComplete} />
 }

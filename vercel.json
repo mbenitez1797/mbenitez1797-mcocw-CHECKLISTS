@@ -6,5 +6,11 @@
       "src": "package.json",
       "use": "@vercel/next"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/auto-submit-checklists",
+      "schedule": "*/5 * * * *"
+    }
   ]
 }

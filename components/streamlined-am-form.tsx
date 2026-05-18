@@ -11,8 +11,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { FormProgress } from "@/components/form-progress"
 import { ChecklistTask, ChecklistSection } from "@/components/checklist-task"
 import { ChecklistActions } from "@/components/checklist-actions"
+import { AMBatchDepositTasks } from "@/components/am-batch-deposit-tasks"
 import { useChecklistSubmit } from "@/hooks/use-checklist-submit"
-import { ChevronLeft, ChevronRight, CheckCircle2, Send, Save, Home, Loader2, AlertCircle, Monitor, Users, CreditCard, MessageSquare, FileText, Building2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, CheckCircle2, Send, Save, Home, Loader2, AlertCircle, Monitor, Users, MessageSquare, FileText } from "lucide-react"
 import {
   amStreamlinedSchema,
   type AMStreamlinedFormData,
@@ -22,7 +23,6 @@ import {
 
 const STORAGE_KEY = "am-streamlined-checklist-draft"
 
-// Quick reference systems for AM shift
 const amSystems = [
   { name: "Stay PMS", icon: Monitor, description: "Reservations, rooms, folios" },
   { name: "GXP", icon: MessageSquare, description: "Guest requests & issues" },
@@ -86,7 +86,6 @@ export function StreamlinedAMForm() {
 
   const { control, handleSubmit, watch, setValue, reset } = form
 
-  // Load saved progress
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
@@ -127,26 +126,18 @@ export function StreamlinedAMForm() {
   const getCompletedTaskLabels = (): string[] => {
     const completed: string[] = []
     const values = form.getValues()
-    
     Object.keys(amTasks).forEach((key) => {
-      if (values[key as keyof AMStreamlinedFormData] === true) {
-        completed.push(amTasks[key].label)
-      }
+      if (values[key as keyof AMStreamlinedFormData] === true) completed.push(amTasks[key].label)
     })
-    
     return completed
   }
 
   const getIncompleteTaskLabels = (): string[] => {
     const incomplete: string[] = []
     const values = form.getValues()
-    
     Object.keys(amTasks).forEach((key) => {
-      if (values[key as keyof AMStreamlinedFormData] !== true) {
-        incomplete.push(amTasks[key].label)
-      }
+      if (values[key as keyof AMStreamlinedFormData] !== true) incomplete.push(amTasks[key].label)
     })
-    
     return incomplete
   }
 
@@ -183,9 +174,7 @@ export function StreamlinedAMForm() {
             Your AM Front Desk Checklist has been successfully submitted. The PM shift team has been notified.
           </p>
           {result?.oneDrive?.fileUrl && (
-            <p className="text-sm text-muted-foreground">
-              A copy has been saved to OneDrive.
-            </p>
+            <p className="text-sm text-muted-foreground">A copy has been saved to OneDrive.</p>
           )}
           <div className="flex gap-3 mt-4">
             <Button
@@ -212,16 +201,13 @@ export function StreamlinedAMForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">AM Front Desk Checklist</h1>
           <p className="text-muted-foreground">Morning shift operations checklist</p>
         </div>
         <div className="flex items-center gap-3">
-          {saveMessage && (
-            <span className="text-sm text-green-600 font-medium">{saveMessage}</span>
-          )}
+          {saveMessage && <span className="text-sm text-green-600 font-medium">{saveMessage}</span>}
           <Button type="button" variant="outline" size="sm" onClick={saveProgress}>
             <Save className="w-4 h-4 mr-2" />
             Save Progress
@@ -241,58 +227,28 @@ export function StreamlinedAMForm() {
         </div>
       </div>
 
-      <FormProgress
-        currentStep={currentStep}
-        totalSteps={STREAMLINED_STEPS.length}
-        stepLabels={STREAMLINED_STEPS}
-      />
+      <FormProgress currentStep={currentStep} totalSteps={STREAMLINED_STEPS.length} stepLabels={STREAMLINED_STEPS} />
 
-      {/* Step 0: Snapshot */}
       {currentStep === 0 && (
         <>
           <QuickReferenceCard />
           <ChecklistSection title="Snapshot" description="Start of shift overview and status check">
-            {/* Shift Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-card border border-border rounded-lg">
               <div>
                 <Label htmlFor="associateName">Associate Name *</Label>
-                <Controller
-                  name="associateName"
-                  control={control}
-                  render={({ field }) => (
-                    <Input id="associateName" {...field} placeholder="Your name" className="mt-1" />
-                  )}
-                />
+                <Controller name="associateName" control={control} render={({ field }) => <Input id="associateName" {...field} placeholder="Your name" className="mt-1" />} />
               </div>
               <div>
                 <Label htmlFor="date">Date *</Label>
-                <Controller
-                  name="date"
-                  control={control}
-                  render={({ field }) => (
-                    <Input id="date" type="date" {...field} className="mt-1" />
-                  )}
-                />
+                <Controller name="date" control={control} render={({ field }) => <Input id="date" type="date" {...field} className="mt-1" />} />
               </div>
               <div>
                 <Label htmlFor="shiftStartTime">Shift Start</Label>
-                <Controller
-                  name="shiftStartTime"
-                  control={control}
-                  render={({ field }) => (
-                    <Input id="shiftStartTime" type="time" {...field} className="mt-1" />
-                  )}
-                />
+                <Controller name="shiftStartTime" control={control} render={({ field }) => <Input id="shiftStartTime" type="time" {...field} className="mt-1" />} />
               </div>
               <div>
                 <Label htmlFor="managerOnDuty">Manager on Duty</Label>
-                <Controller
-                  name="managerOnDuty"
-                  control={control}
-                  render={({ field }) => (
-                    <Input id="managerOnDuty" {...field} placeholder="MOD name" className="mt-1" />
-                  )}
-                />
+                <Controller name="managerOnDuty" control={control} render={({ field }) => <Input id="managerOnDuty" {...field} placeholder="MOD name" className="mt-1" />} />
               </div>
             </div>
 
@@ -300,14 +256,7 @@ export function StreamlinedAMForm() {
               name="reviewOvernightHandoff"
               control={control}
               render={({ field }) => (
-                <ChecklistTask
-                  id={amTasks.reviewOvernightHandoff.id}
-                  label={amTasks.reviewOvernightHandoff.label}
-                  instruction={amTasks.reviewOvernightHandoff.instruction}
-                  systems={amTasks.reviewOvernightHandoff.systems}
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <ChecklistTask id={amTasks.reviewOvernightHandoff.id} label={amTasks.reviewOvernightHandoff.label} instruction={amTasks.reviewOvernightHandoff.instruction} systems={amTasks.reviewOvernightHandoff.systems} checked={field.value} onCheckedChange={field.onChange} />
               )}
             />
 
@@ -315,249 +264,82 @@ export function StreamlinedAMForm() {
               name="reviewHouseSnapshot"
               control={control}
               render={({ field }) => (
-                <ChecklistTask
-                  id={amTasks.reviewHouseSnapshot.id}
-                  label={amTasks.reviewHouseSnapshot.label}
-                  instruction={amTasks.reviewHouseSnapshot.instruction}
-                  systems={amTasks.reviewHouseSnapshot.systems}
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <ChecklistTask id={amTasks.reviewHouseSnapshot.id} label={amTasks.reviewHouseSnapshot.label} instruction={amTasks.reviewHouseSnapshot.instruction} systems={amTasks.reviewHouseSnapshot.systems} checked={field.value} onCheckedChange={field.onChange} />
               )}
             />
           </ChecklistSection>
         </>
       )}
 
-      {/* Step 1: Priority Review */}
       {currentStep === 1 && (
-        <ChecklistSection title="Priority Review" description="Review departures, arrivals, and room inventory">
-          <Controller
-            name="reviewDeparturesBalances"
-            control={control}
-            render={({ field }) => (
-              <ChecklistTask
-                id={amTasks.reviewDeparturesBalances.id}
-                label={amTasks.reviewDeparturesBalances.label}
-                instruction={amTasks.reviewDeparturesBalances.instruction}
-                systems={amTasks.reviewDeparturesBalances.systems}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
+        <>
+          <AMBatchDepositTasks />
+          <ChecklistSection title="Priority Review" description="Review departures, arrivals, and room inventory">
+            <Controller
+              name="reviewDeparturesBalances"
+              control={control}
+              render={({ field }) => (
+                <ChecklistTask id={amTasks.reviewDeparturesBalances.id} label={amTasks.reviewDeparturesBalances.label} instruction={amTasks.reviewDeparturesBalances.instruction} systems={amTasks.reviewDeparturesBalances.systems} checked={field.value} onCheckedChange={field.onChange} />
+              )}
+            />
 
-          <Controller
-            name="reviewPriorityArrivals"
-            control={control}
-            render={({ field }) => (
-              <ChecklistTask
-                id={amTasks.reviewPriorityArrivals.id}
-                label={amTasks.reviewPriorityArrivals.label}
-                instruction={amTasks.reviewPriorityArrivals.instruction}
-                systems={amTasks.reviewPriorityArrivals.systems}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
+            <Controller
+              name="reviewPriorityArrivals"
+              control={control}
+              render={({ field }) => (
+                <ChecklistTask id={amTasks.reviewPriorityArrivals.id} label={amTasks.reviewPriorityArrivals.label} instruction={amTasks.reviewPriorityArrivals.instruction} systems={amTasks.reviewPriorityArrivals.systems} checked={field.value} onCheckedChange={field.onChange} />
+              )}
+            />
 
-          <Controller
-            name="reviewRoomInventory"
-            control={control}
-            render={({ field }) => (
-              <ChecklistTask
-                id={amTasks.reviewRoomInventory.id}
-                label={amTasks.reviewRoomInventory.label}
-                instruction={amTasks.reviewRoomInventory.instruction}
-                systems={amTasks.reviewRoomInventory.systems}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-        </ChecklistSection>
+            <Controller
+              name="reviewRoomInventory"
+              control={control}
+              render={({ field }) => (
+                <ChecklistTask id={amTasks.reviewRoomInventory.id} label={amTasks.reviewRoomInventory.label} instruction={amTasks.reviewRoomInventory.instruction} systems={amTasks.reviewRoomInventory.systems} checked={field.value} onCheckedChange={field.onChange} />
+              )}
+            />
+          </ChecklistSection>
+        </>
       )}
 
-      {/* Step 2: Critical Tasks */}
       {currentStep === 2 && (
         <ChecklistSection title="Critical Tasks" description="Execute priority tasks for the shift">
-          <Controller
-            name="coordinatePriorityRooms"
-            control={control}
-            render={({ field }) => (
-              <ChecklistTask
-                id={amTasks.coordinatePriorityRooms.id}
-                label={amTasks.coordinatePriorityRooms.label}
-                instruction={amTasks.coordinatePriorityRooms.instruction}
-                systems={amTasks.coordinatePriorityRooms.systems}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-
-          <Controller
-            name="reviewGXPRequests"
-            control={control}
-            render={({ field }) => (
-              <ChecklistTask
-                id={amTasks.reviewGXPRequests.id}
-                label={amTasks.reviewGXPRequests.label}
-                instruction={amTasks.reviewGXPRequests.instruction}
-                systems={amTasks.reviewGXPRequests.systems}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-
-          <Controller
-            name="reviewPaymentProfiles"
-            control={control}
-            render={({ field }) => (
-              <ChecklistTask
-                id={amTasks.reviewPaymentProfiles.id}
-                label={amTasks.reviewPaymentProfiles.label}
-                instruction={amTasks.reviewPaymentProfiles.instruction}
-                systems={amTasks.reviewPaymentProfiles.systems}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-
-          <Controller
-            name="reviewGroups"
-            control={control}
-            render={({ field }) => (
-              <ChecklistTask
-                id={amTasks.reviewGroups.id}
-                label={amTasks.reviewGroups.label}
-                instruction={amTasks.reviewGroups.instruction}
-                systems={amTasks.reviewGroups.systems}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-
-          <Controller
-            name="confirmNoUnnecessaryAssignments"
-            control={control}
-            render={({ field }) => (
-              <ChecklistTask
-                id={amTasks.confirmNoUnnecessaryAssignments.id}
-                label={amTasks.confirmNoUnnecessaryAssignments.label}
-                instruction={amTasks.confirmNoUnnecessaryAssignments.instruction}
-                systems={amTasks.confirmNoUnnecessaryAssignments.systems}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
+          <Controller name="coordinatePriorityRooms" control={control} render={({ field }) => <ChecklistTask id={amTasks.coordinatePriorityRooms.id} label={amTasks.coordinatePriorityRooms.label} instruction={amTasks.coordinatePriorityRooms.instruction} systems={amTasks.coordinatePriorityRooms.systems} checked={field.value} onCheckedChange={field.onChange} />} />
+          <Controller name="reviewGXPRequests" control={control} render={({ field }) => <ChecklistTask id={amTasks.reviewGXPRequests.id} label={amTasks.reviewGXPRequests.label} instruction={amTasks.reviewGXPRequests.instruction} systems={amTasks.reviewGXPRequests.systems} checked={field.value} onCheckedChange={field.onChange} />} />
+          <Controller name="reviewPaymentProfiles" control={control} render={({ field }) => <ChecklistTask id={amTasks.reviewPaymentProfiles.id} label={amTasks.reviewPaymentProfiles.label} instruction={amTasks.reviewPaymentProfiles.instruction} systems={amTasks.reviewPaymentProfiles.systems} checked={field.value} onCheckedChange={field.onChange} />} />
+          <Controller name="reviewGroups" control={control} render={({ field }) => <ChecklistTask id={amTasks.reviewGroups.id} label={amTasks.reviewGroups.label} instruction={amTasks.reviewGroups.instruction} systems={amTasks.reviewGroups.systems} checked={field.value} onCheckedChange={field.onChange} />} />
+          <Controller name="confirmNoUnnecessaryAssignments" control={control} render={({ field }) => <ChecklistTask id={amTasks.confirmNoUnnecessaryAssignments.id} label={amTasks.confirmNoUnnecessaryAssignments.label} instruction={amTasks.confirmNoUnnecessaryAssignments.instruction} systems={amTasks.confirmNoUnnecessaryAssignments.systems} checked={field.value} onCheckedChange={field.onChange} />} />
         </ChecklistSection>
       )}
 
-      {/* Step 3: Issues / Exceptions */}
       {currentStep === 3 && (
         <ChecklistSection title="Issues / Exceptions" description="Document any issues, exceptions, or concerns">
           <div className="p-4 bg-card border border-border rounded-lg">
             <Label htmlFor="issuesNotes">Issues, Exceptions, or Concerns</Label>
-            <p className="text-sm text-muted-foreground mt-1 mb-2">
-              Document any unresolved guest issues, billing problems, room concerns, system errors, or items requiring follow-up.
-            </p>
-            <Controller
-              name="issuesNotes"
-              control={control}
-              render={({ field }) => (
-                <Textarea
-                  id="issuesNotes"
-                  {...field}
-                  placeholder="Document any issues, exceptions, or concerns..."
-                  className="min-h-[150px]"
-                />
-              )}
-            />
+            <p className="text-sm text-muted-foreground mt-1 mb-2">Document any unresolved guest issues, billing problems, room concerns, system errors, or items requiring follow-up.</p>
+            <Controller name="issuesNotes" control={control} render={({ field }) => <Textarea id="issuesNotes" {...field} placeholder="Document any issues, exceptions, or concerns..." className="min-h-[150px]" />} />
           </div>
         </ChecklistSection>
       )}
 
-      {/* Step 4: Handoff / Summary */}
       {currentStep === 4 && (
         <ChecklistSection title="Handoff / Summary" description="Prepare handoff for the PM shift">
-          <Controller
-            name="preparePMHandoff"
-            control={control}
-            render={({ field }) => (
-              <ChecklistTask
-                id={amTasks.preparePMHandoff.id}
-                label={amTasks.preparePMHandoff.label}
-                instruction={amTasks.preparePMHandoff.instruction}
-                systems={amTasks.preparePMHandoff.systems}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-
+          <Controller name="preparePMHandoff" control={control} render={({ field }) => <ChecklistTask id={amTasks.preparePMHandoff.id} label={amTasks.preparePMHandoff.label} instruction={amTasks.preparePMHandoff.instruction} systems={amTasks.preparePMHandoff.systems} checked={field.value} onCheckedChange={field.onChange} />} />
           <div className="p-4 bg-card border border-border rounded-lg">
             <Label htmlFor="handoffNotes">Handoff Notes</Label>
-            <p className="text-sm text-muted-foreground mt-1 mb-2">
-              Summarize key information for the PM shift: arrivals remaining, priority arrivals, rooms not ready, billing issues, GXP cases, groups, OOO rooms.
-            </p>
-            <Controller
-              name="handoffNotes"
-              control={control}
-              render={({ field }) => (
-                <Textarea
-                  id="handoffNotes"
-                  {...field}
-                  placeholder="Enter handoff notes for PM shift..."
-                  className="min-h-[150px]"
-                />
-              )}
-            />
+            <p className="text-sm text-muted-foreground mt-1 mb-2">Summarize key information for the PM shift: arrivals remaining, priority arrivals, rooms not ready, billing issues, GXP cases, groups, OOO rooms.</p>
+            <Controller name="handoffNotes" control={control} render={({ field }) => <Textarea id="handoffNotes" {...field} placeholder="Enter handoff notes for PM shift..." className="min-h-[150px]" />} />
           </div>
         </ChecklistSection>
       )}
 
-      {/* Step 5: Final Confirmation */}
       {currentStep === 5 && (
         <ChecklistSection title="Final Confirmation" description="Confirm all tasks are complete and handoff is ready">
-          <Controller
-            name="confirmAllTasksComplete"
-            control={control}
-            render={({ field }) => (
-              <ChecklistTask
-                id="confirmAllTasksComplete"
-                label="I confirm all required tasks have been completed"
-                instruction="Review the checklist and confirm that all snapshot, priority review, and critical tasks have been completed for this shift."
-                systems={[]}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-
-          <Controller
-            name="confirmHandoffReady"
-            control={control}
-            render={({ field }) => (
-              <ChecklistTask
-                id="confirmHandoffReady"
-                label="I confirm the PM shift handoff is ready"
-                instruction="Confirm that handoff notes are complete and the PM shift has all information needed to continue operations."
-                systems={[]}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
+          <Controller name="confirmAllTasksComplete" control={control} render={({ field }) => <ChecklistTask id="confirmAllTasksComplete" label="I confirm all required tasks have been completed" instruction="Review the checklist and confirm that all snapshot, priority review, and critical tasks have been completed for this shift." systems={[]} checked={field.value} onCheckedChange={field.onChange} />} />
+          <Controller name="confirmHandoffReady" control={control} render={({ field }) => <ChecklistTask id="confirmHandoffReady" label="I confirm the PM shift handoff is ready" instruction="Confirm that handoff notes are complete and the PM shift has all information needed to continue operations." systems={[]} checked={field.value} onCheckedChange={field.onChange} />} />
         </ChecklistSection>
       )}
 
-      {/* Error Message */}
       {submitError && (
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
@@ -568,32 +350,15 @@ export function StreamlinedAMForm() {
         </div>
       )}
 
-      {/* Navigation */}
       <div className="flex justify-between pt-4 border-t border-border">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={prevStep}
-          disabled={currentStep === 0 || isSubmitting}
-          className="gap-2"
-        >
+        <Button type="button" variant="outline" onClick={prevStep} disabled={currentStep === 0 || isSubmitting} className="gap-2">
           <ChevronLeft className="w-4 h-4" />
           Previous
         </Button>
 
         {currentStep === STREAMLINED_STEPS.length - 1 ? (
           <Button type="submit" className="gap-2" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Submitting...
-              </>
-            ) : (
-              <>
-                <Send className="w-4 h-4" />
-                Submit Checklist
-              </>
-            )}
+            {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" />Submitting...</> : <><Send className="w-4 h-4" />Submit Checklist</>}
           </Button>
         ) : (
           <Button type="button" onClick={nextStep} className="gap-2">
@@ -605,6 +370,3 @@ export function StreamlinedAMForm() {
     </form>
   )
 }
-
-
-

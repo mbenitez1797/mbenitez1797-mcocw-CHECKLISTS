@@ -1,7 +1,7 @@
 "use client"
 
 import { Building2 } from "lucide-react"
-import { MonthForecastDashboard } from "@/components/month-forecast-dashboard"
+import { MonthForecastDashboardV2 } from "@/components/month-forecast-dashboard-v2"
 
 export default function AvailabilityPage() {
   return (
@@ -16,7 +16,7 @@ export default function AvailabilityPage() {
         </p>
       </div>
 
-      <MonthForecastDashboard />
+      <MonthForecastDashboardV2 />
     </div>
   )
 }

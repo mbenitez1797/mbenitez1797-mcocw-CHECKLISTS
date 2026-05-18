@@ -33,6 +33,16 @@ const coordinatePriorityRoomsTask = {
   systems: amTasks.coordinatePriorityRooms.systems,
 }
 
+const gxpCaseManagementTask = {
+  id: amTasks.reviewGXPRequests.id,
+  label: "Review GXP/GPS cases, guest recognition, and pre-arrival planning",
+  instruction:
+    "Open GXP and GPS daily. Review open guest and associate-facing cases, requests, defects, CEC items, amenities, and pre-arrival planning. Prioritize Highly Actionable arrivals in GPS, review preferences, past negative cases, service requests, and loyalty details, then create/update cases, assign owners, manage response times, and close resolved cases within priority standards. Use GXP reports/dashboards to spot recurring issues and bring trends to line-up or operations meetings.",
+  expandedInstruction:
+    "Minimum GXP/GPS standard: create, manage, and close guest-related cases such as amenities, service requests, defects, and problem resolution; create property-related cases such as Bonvoy support, associate-reported requests, product defects, security incidents, and work orders; manage CEC cases within 72 hours; review GPS Highly Actionable arrivals, preferences, repeat guest history, prior service opportunities, and negative case history; use reports and dashboards during daily stand-up to identify recurring issues and prevent repeat defects.",
+  systems: amTasks.reviewGXPRequests.systems,
+}
+
 const amSystems = [
   { name: "Stay PMS", icon: Monitor, description: "Reservations, rooms, folios" },
   { name: "GXP", icon: MessageSquare, description: "Guest requests & issues" },
@@ -323,7 +333,21 @@ export function StreamlinedAMForm() {
               />
             )}
           />
-          <Controller name="reviewGXPRequests" control={control} render={({ field }) => <ChecklistTask id={amTasks.reviewGXPRequests.id} label={amTasks.reviewGXPRequests.label} instruction={amTasks.reviewGXPRequests.instruction} systems={amTasks.reviewGXPRequests.systems} checked={field.value} onCheckedChange={field.onChange} />} />
+          <Controller
+            name="reviewGXPRequests"
+            control={control}
+            render={({ field }) => (
+              <ChecklistTask
+                id={gxpCaseManagementTask.id}
+                label={gxpCaseManagementTask.label}
+                instruction={gxpCaseManagementTask.instruction}
+                expandedInstruction={gxpCaseManagementTask.expandedInstruction}
+                systems={gxpCaseManagementTask.systems}
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
           <Controller name="reviewPaymentProfiles" control={control} render={({ field }) => <ChecklistTask id={amTasks.reviewPaymentProfiles.id} label={amTasks.reviewPaymentProfiles.label} instruction={amTasks.reviewPaymentProfiles.instruction} systems={amTasks.reviewPaymentProfiles.systems} checked={field.value} onCheckedChange={field.onChange} />} />
           <Controller name="reviewGroups" control={control} render={({ field }) => <ChecklistTask id={amTasks.reviewGroups.id} label={amTasks.reviewGroups.label} instruction={amTasks.reviewGroups.instruction} systems={amTasks.reviewGroups.systems} checked={field.value} onCheckedChange={field.onChange} />} />
           <Controller name="confirmNoUnnecessaryAssignments" control={control} render={({ field }) => <ChecklistTask id={amTasks.confirmNoUnnecessaryAssignments.id} label={amTasks.confirmNoUnnecessaryAssignments.label} instruction={amTasks.confirmNoUnnecessaryAssignments.instruction} systems={amTasks.confirmNoUnnecessaryAssignments.systems} checked={field.value} onCheckedChange={field.onChange} />} />

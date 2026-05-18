@@ -288,7 +288,7 @@ export function StreamlinedAMForm() {
       {currentStep === 1 && (
         <>
           <AMBatchDepositTasks />
-          <ChecklistSection title="Priority Review" description="Review departures, arrivals, and room inventory">
+          <ChecklistSection title="Priority Review" description="Review departures, arrivals, mobile check-in requests, and room inventory">
             <Controller
               name="reviewDeparturesBalances"
               control={control}
@@ -306,6 +306,22 @@ export function StreamlinedAMForm() {
             />
 
             <Controller
+              name="coordinatePriorityRooms"
+              control={control}
+              render={({ field }) => (
+                <ChecklistTask
+                  id={coordinatePriorityRoomsTask.id}
+                  label={coordinatePriorityRoomsTask.label}
+                  instruction={coordinatePriorityRoomsTask.instruction}
+                  expandedInstruction={coordinatePriorityRoomsTask.expandedInstruction}
+                  systems={coordinatePriorityRoomsTask.systems}
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+
+            <Controller
               name="reviewRoomInventory"
               control={control}
               render={({ field }) => (
@@ -318,21 +334,6 @@ export function StreamlinedAMForm() {
 
       {currentStep === 2 && (
         <ChecklistSection title="Critical Tasks" description="Execute priority tasks for the shift">
-          <Controller
-            name="coordinatePriorityRooms"
-            control={control}
-            render={({ field }) => (
-              <ChecklistTask
-                id={coordinatePriorityRoomsTask.id}
-                label={coordinatePriorityRoomsTask.label}
-                instruction={coordinatePriorityRoomsTask.instruction}
-                expandedInstruction={coordinatePriorityRoomsTask.expandedInstruction}
-                systems={coordinatePriorityRoomsTask.systems}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
           <Controller
             name="reviewGXPRequests"
             control={control}

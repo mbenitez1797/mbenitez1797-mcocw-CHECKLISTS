@@ -30,6 +30,8 @@ const UPGRADE_PATHS: Record<ForecastRoomGroup, ForecastRoomGroup[]> = {
   SUIT: [],
 }
 
+type ForecastRoomRow = ForecastDay["groups"][ForecastRoomGroup]["rows"][number]
+
 type RoomCodeBalanceStats = {
   roomCode: string
   roomLabel: string
@@ -138,6 +140,12 @@ function chunkWeeks(days: ForecastDay[]) {
 
 function availabilityClass(value: number) {
   return value < 0 ? "text-red-600 font-bold" : "text-slate-900"
+}
+
+function availabilityChipClass(value: number) {
+  if (value < 0) return "border-red-300 bg-red-50 text-red-700"
+  if (value === 0) return "border-amber-300 bg-amber-50 text-amber-800"
+  return "border-emerald-200 bg-emerald-50 text-emerald-700"
 }
 
 function getRoomCodeInventory(roomCode: string) {
@@ -255,6 +263,89 @@ function buildSmartBalanceSuggestions(days: ForecastDay[], selectedDate: string,
     suggestions,
     unresolvedShortages,
   }
+}
+
+function MiniMetric({ label, value, className }: { label: string; value: string | number; className?: string }) {
+  return (
+    <div className={cn("rounded-md border bg-white px-2 py-1 text-center", className)}>
+      <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-sm font-bold tabular-nums text-slate-900">{value}</div>
+    </div>
+  )
+}
+
+function RoomCodeAvailabilityCard({ row }: { row: ForecastRoomRow }) {
+  const inventory = getRoomCodeInventory(row.roomCode)
+  const occupied = row.arrivals + row.stayovers
+  const available = inventory - occupied
+
+  return (
+    <div className={cn("rounded-lg border p-3", available < 0 ? "border-red-300 bg-red-50" : available === 0 ? "border-amber-300 bg-amber-50" : "border-slate-200 bg-white")}>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <div className="font-mono text-sm font-bold text-slate-900">{row.roomCode}</div>
+          <div className="mt-0.5 max-w-[240px] truncate text-[11px] text-slate-500" title={row.roomLabel}>{row.roomLabel}</div>
+        </div>
+        <div className={cn("rounded-full border px-2 py-1 text-xs font-bold", availabilityChipClass(available))}>
+          {available} available
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-4 gap-2">
+        <MiniMetric label="Inv" value={inventory} />
+        <MiniMetric label="Arv" value={row.arrivals} />
+        <MiniMetric label="Dpt" value={row.departures} />
+        <MiniMetric label="Stay" value={row.stayovers} />
+      </div>
+    </div>
+  )
+}
+
+function SmartBalanceCard({ suggestion }: { suggestion: SmartBalanceSuggestion }) {
+  return (
+    <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-blue-700">Recommended move</div>
+          <div className="mt-1 text-2xl font-bold text-slate-900">
+            Move {suggestion.moveCount}
+          </div>
+        </div>
+        <div className="rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-semibold text-blue-700">
+          LOS {suggestion.losNights}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+        <div className="rounded-lg border bg-white p-3">
+          <div className="text-[10px] font-semibold uppercase text-slate-500">From</div>
+          <div className="mt-1 font-mono text-lg font-bold text-red-700">{suggestion.fromCode}</div>
+          <div className="text-xs text-slate-500">{suggestion.fromGroup}</div>
+        </div>
+        <div className="text-center text-xl font-bold text-slate-400">→</div>
+        <div className="rounded-lg border bg-white p-3">
+          <div className="text-[10px] font-semibold uppercase text-slate-500">To</div>
+          <div className="mt-1 font-mono text-lg font-bold text-emerald-700">{suggestion.toCode}</div>
+          <div className="text-xs text-slate-500">{suggestion.toGroup}</div>
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <MiniMetric label="Target open" value={suggestion.targetMinAvailable} />
+        <MiniMetric label="Source short" value={suggestion.sourceShortage} />
+      </div>
+
+      <div className="mt-3">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Dates helped</div>
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          {suggestion.datesHelped.map((date) => (
+            <span key={date} className="rounded-full border border-red-200 bg-white px-2 py-1 text-[11px] font-medium text-red-700">
+              {date}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 async function ocrDocumentFile(file: File, onProgress: (message: string) => void, parseError: string) {
@@ -480,23 +571,28 @@ export function MonthForecastDashboard({ compact = false, onForecastApplied }: M
               ["VIKG", selectedDay.groups.VIKG.available],
               ["SUIT", selectedDay.groups.SUIT.available],
             ].map(([label, value]) => (
-              <div key={String(label)} className="rounded-lg border bg-white p-3">
+              <div key={String(label)} className={cn("rounded-lg border p-3", typeof value === "number" && value < 0 ? "border-red-300 bg-red-50" : "bg-white")}>
                 <div className="text-[11px] font-medium uppercase text-slate-500">{label}</div>
                 <div className={cn("mt-1 text-xl font-bold tabular-nums", typeof value === "number" && value < 0 ? "text-red-600" : "text-slate-900")}>{value}</div>
               </div>
             ))}
           </div>
 
-          <Card>
+          <Card className="border-blue-100">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Smart Balancer</CardTitle>
               <CardDescription>
-                Tests a {SMART_BALANCER_LOS_NIGHTS}-night LOS window from {formatDateLabel(selectedDay.dateISO)} and suggests upgrade moves that can cover the full window.
+                Tests a {SMART_BALANCER_LOS_NIGHTS}-night LOS window from {formatDateLabel(selectedDay.dateISO)} and turns oversold room codes into clear upgrade actions.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="text-sm text-slate-600">
-                Window: {smartBalance.windowDays.map((day) => formatDateLabel(day.dateISO)).join(" → ") || "not enough forecast days"}
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                <span className="font-medium text-slate-800">Window</span>
+                {smartBalance.windowDays.length ? smartBalance.windowDays.map((day) => (
+                  <span key={day.dateISO} className="rounded-full border bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
+                    {formatDateLabel(day.dateISO)}
+                  </span>
+                )) : <span>not enough forecast days</span>}
               </div>
 
               {smartBalance.windowDays.length < SMART_BALANCER_LOS_NIGHTS && (
@@ -506,30 +602,28 @@ export function MonthForecastDashboard({ compact = false, onForecastApplied }: M
               )}
 
               {smartBalance.suggestions.length > 0 ? (
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-4 xl:grid-cols-2">
                   {smartBalance.suggestions.map((suggestion, index) => (
-                    <div key={`${suggestion.fromCode}-${suggestion.toCode}-${index}`} className="rounded-lg border bg-slate-50 p-3">
-                      <div className="text-sm font-semibold text-slate-900">
-                        Move {suggestion.moveCount} LOS {suggestion.losNights} reservation{suggestion.moveCount === 1 ? "" : "s"}
-                      </div>
-                      <div className="mt-1 text-sm text-slate-700">
-                        From <span className="font-semibold">{suggestion.fromCode}</span> ({suggestion.fromGroup}) → <span className="font-semibold">{suggestion.toCode}</span> ({suggestion.toGroup})
-                      </div>
-                      <div className="mt-2 text-xs text-slate-500">
-                        Helps: {suggestion.datesHelped.join(", ")} · Target has at least {suggestion.targetMinAvailable} open across the window.
-                      </div>
-                    </div>
+                    <SmartBalanceCard key={`${suggestion.fromCode}-${suggestion.toCode}-${index}`} suggestion={suggestion} />
                   ))}
                 </div>
               ) : (
-                <div className="rounded-lg border bg-slate-50 p-3 text-sm text-slate-600">
-                  No clean upgrade move found for this {SMART_BALANCER_LOS_NIGHTS}-night window. Either nothing is oversold, or the upgrade targets are also tight. Because apparently inventory enjoys playing Jenga.
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  <div className="font-semibold text-slate-900">No clean upgrade path found.</div>
+                  <div className="mt-1">Either the selected window is balanced, or every logical upgrade target is also tight for the full LOS. In hotel terms: the inventory Jenga tower is wobbling.</div>
                 </div>
               )}
 
               {smartBalance.unresolvedShortages.length > 0 && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                  Still short after upgrade suggestions: {smartBalance.unresolvedShortages.map((item) => `${item.roomCode} needs ${item.shortage}`).join(", ")}.
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                  <div className="font-semibold">Still short after suggested moves</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {smartBalance.unresolvedShortages.map((item) => (
+                      <span key={item.roomCode} className="rounded-full border border-red-300 bg-white px-2.5 py-1 text-xs font-bold text-red-700">
+                        {item.roomCode}: needs {item.shortage}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -548,7 +642,7 @@ export function MonthForecastDashboard({ compact = false, onForecastApplied }: M
                 Previous Week
               </Button>
               <Button type="button" variant="outline" size="sm" onClick={() => setExpanded((value) => !value)}>
-                {expanded ? "Consolidated View" : "Expanded Room Types"}
+                {expanded ? "Consolidated View" : "Expanded Room Codes"}
               </Button>
               <Button type="button" variant="outline" size="sm" onClick={() => selectWeek(weekIndex + 1)} disabled={weekIndex >= weeks.length - 1}>
                 Next Week
@@ -590,19 +684,24 @@ export function MonthForecastDashboard({ compact = false, onForecastApplied }: M
                       <td className={cn("p-3 text-right tabular-nums", availabilityClass(day.totalAvailable))}>{day.totalAvailable}</td>
                     </tr>
                     {expanded && FORECAST_ROOM_GROUPS.map((group) => (
-                      <tr key={`${day.dateISO}-${group}`} className="border-t bg-slate-50/60 text-xs">
-                        <td className="p-2 pl-8 font-semibold text-slate-700" colSpan={2}>{group}</td>
-                        <td className="p-2 text-right" colSpan={3}>Arv {day.groups[group].arrivals} / Dpt {day.groups[group].departures} / Stay {day.groups[group].stayovers}</td>
-                        <td className="p-2 text-slate-500" colSpan={6}>
-                          {day.groups[group].rows.map((row) => {
-                            const rowOccupied = row.arrivals + row.stayovers
-                            const rowAvailable = getRoomCodeInventory(row.roomCode) - rowOccupied
-                            return (
-                              <span key={`${row.roomCode}-${row.roomLabel}`} className={cn("mr-4 inline-block", availabilityClass(rowAvailable))}>
-                                {row.roomCode}: {rowAvailable} available / Arv {row.arrivals} / Dpt {row.departures} / Stay {row.stayovers}
-                              </span>
-                            )
-                          })}
+                      <tr key={`${day.dateISO}-${group}`} className="border-t bg-slate-50/60">
+                        <td className="p-3 align-top" colSpan={2}>
+                          <div className="font-semibold text-slate-800">{group}</div>
+                          <div className={cn("mt-1 inline-flex rounded-full border px-2 py-1 text-xs font-bold", availabilityChipClass(day.groups[group].available))}>
+                            {day.groups[group].available} available
+                          </div>
+                        </td>
+                        <td className="p-3 align-top" colSpan={9}>
+                          <div className="mb-2 grid max-w-md grid-cols-3 gap-2">
+                            <MiniMetric label="Arv" value={day.groups[group].arrivals} />
+                            <MiniMetric label="Dpt" value={day.groups[group].departures} />
+                            <MiniMetric label="Stay" value={day.groups[group].stayovers} />
+                          </div>
+                          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                            {day.groups[group].rows.map((row) => (
+                              <RoomCodeAvailabilityCard key={`${day.dateISO}-${row.roomCode}-${row.roomLabel}`} row={row} />
+                            ))}
+                          </div>
                         </td>
                       </tr>
                     ))}

@@ -15,10 +15,48 @@ import {
   parseMonthHousekeepingForecastText,
   type ForecastDay,
   type ForecastParseResult,
+  type ForecastRoomGroup,
 } from "@/lib/month-housekeeping-forecast"
 
 const STORAGE_KEY = "month-housekeeping-forecast-dashboard-v6"
 const PARSE_ERROR = "Unable to parse housekeeping forecast. Please upload the Month Housekeeping Forecast PDF."
+const SMART_BALANCER_LOS_NIGHTS = 3
+
+const UPGRADE_PATHS: Record<ForecastRoomGroup, ForecastRoomGroup[]> = {
+  KING: ["VIKG", "SUIT"],
+  QNQN: ["VIQN", "SUIT"],
+  VIQN: ["SUIT"],
+  VIKG: ["SUIT"],
+  SUIT: [],
+}
+
+type RoomCodeBalanceStats = {
+  roomCode: string
+  roomLabel: string
+  group: ForecastRoomGroup
+  availabilityByDate: Array<{ dateISO: string; dateLabel: string; available: number }>
+  minAvailable: number
+  shortage: number
+  shortageDates: string[]
+}
+
+type SmartBalanceSuggestion = {
+  fromCode: string
+  fromGroup: ForecastRoomGroup
+  toCode: string
+  toGroup: ForecastRoomGroup
+  moveCount: number
+  losNights: number
+  datesHelped: string[]
+  sourceShortage: number
+  targetMinAvailable: number
+}
+
+type SmartBalanceResult = {
+  windowDays: ForecastDay[]
+  suggestions: SmartBalanceSuggestion[]
+  unresolvedShortages: RoomCodeBalanceStats[]
+}
 
 function groupsSum() {
   return FORECAST_ROOM_GROUPS.reduce((sum, group) => sum + FORECAST_ROOM_TOTALS[group], 0)
@@ -100,6 +138,123 @@ function chunkWeeks(days: ForecastDay[]) {
 
 function availabilityClass(value: number) {
   return value < 0 ? "text-red-600 font-bold" : "text-slate-900"
+}
+
+function getRoomCodeInventory(roomCode: string) {
+  return FORECAST_ROOM_CODE_TOTALS[roomCode] ?? 0
+}
+
+function getSmartBalanceWindow(days: ForecastDay[], selectedDate: string, losNights = SMART_BALANCER_LOS_NIGHTS) {
+  const startIndex = days.findIndex((day) => day.dateISO === selectedDate)
+  if (startIndex < 0) return []
+  return days.slice(startIndex, startIndex + losNights)
+}
+
+function getRoomCodeBalanceStats(windowDays: ForecastDay[]) {
+  const stats = new Map<string, Omit<RoomCodeBalanceStats, "minAvailable" | "shortage" | "shortageDates">>()
+
+  windowDays.forEach((day) => {
+    FORECAST_ROOM_GROUPS.forEach((group) => {
+      day.groups[group].rows.forEach((row) => {
+        const inventoryTotal = getRoomCodeInventory(row.roomCode)
+        const available = inventoryTotal - (row.arrivals + row.stayovers)
+        const existing = stats.get(row.roomCode) || {
+          roomCode: row.roomCode,
+          roomLabel: row.roomLabel,
+          group: row.group,
+          availabilityByDate: [],
+        }
+
+        existing.availabilityByDate.push({
+          dateISO: day.dateISO,
+          dateLabel: formatDateLabel(day.dateISO),
+          available,
+        })
+        stats.set(row.roomCode, existing)
+      })
+    })
+  })
+
+  return Array.from(stats.values()).map((item) => {
+    const values = item.availabilityByDate.map((day) => day.available)
+    const minAvailable = values.length ? Math.min(...values) : 0
+    const shortage = Math.max(0, ...values.map((value) => Math.max(0, -value)))
+    const shortageDates = item.availabilityByDate
+      .filter((day) => day.available < 0)
+      .map((day) => `${day.dateLabel} (${day.available})`)
+
+    return {
+      ...item,
+      minAvailable,
+      shortage,
+      shortageDates,
+    }
+  })
+}
+
+function buildSmartBalanceSuggestions(days: ForecastDay[], selectedDate: string, losNights = SMART_BALANCER_LOS_NIGHTS): SmartBalanceResult {
+  const windowDays = getSmartBalanceWindow(days, selectedDate, losNights)
+  const stats = getRoomCodeBalanceStats(windowDays)
+  const targetRemaining = new Map<string, number>()
+  const unresolvedShortages: RoomCodeBalanceStats[] = []
+  const suggestions: SmartBalanceSuggestion[] = []
+
+  stats.forEach((item) => {
+    if (item.minAvailable > 0 && item.availabilityByDate.length === windowDays.length) {
+      targetRemaining.set(item.roomCode, item.minAvailable)
+    }
+  })
+
+  const sources = stats
+    .filter((item) => item.shortage > 0)
+    .sort((a, b) => b.shortage - a.shortage || a.roomCode.localeCompare(b.roomCode))
+
+  sources.forEach((source) => {
+    let remainingShortage = source.shortage
+    const allowedTargetGroups = UPGRADE_PATHS[source.group]
+    const targets = stats
+      .filter((target) => allowedTargetGroups.includes(target.group) && (targetRemaining.get(target.roomCode) || 0) > 0)
+      .sort((a, b) => {
+        const groupRank = allowedTargetGroups.indexOf(a.group) - allowedTargetGroups.indexOf(b.group)
+        if (groupRank !== 0) return groupRank
+        return (targetRemaining.get(b.roomCode) || 0) - (targetRemaining.get(a.roomCode) || 0)
+      })
+
+    targets.forEach((target) => {
+      if (remainingShortage <= 0) return
+      const availableToMove = targetRemaining.get(target.roomCode) || 0
+      const moveCount = Math.min(remainingShortage, availableToMove)
+      if (moveCount <= 0) return
+
+      suggestions.push({
+        fromCode: source.roomCode,
+        fromGroup: source.group,
+        toCode: target.roomCode,
+        toGroup: target.group,
+        moveCount,
+        losNights: windowDays.length,
+        datesHelped: source.shortageDates,
+        sourceShortage: source.shortage,
+        targetMinAvailable: target.minAvailable,
+      })
+
+      targetRemaining.set(target.roomCode, availableToMove - moveCount)
+      remainingShortage -= moveCount
+    })
+
+    if (remainingShortage > 0) {
+      unresolvedShortages.push({
+        ...source,
+        shortage: remainingShortage,
+      })
+    }
+  })
+
+  return {
+    windowDays,
+    suggestions,
+    unresolvedShortages,
+  }
 }
 
 async function ocrDocumentFile(file: File, onProgress: (message: string) => void, parseError: string) {
@@ -210,6 +365,10 @@ export function MonthForecastDashboard({ compact = false, onForecastApplied }: M
   const selectedDay = useMemo(
     () => displayResult?.days.find((day) => day.dateISO === selectedDate) || visibleDays[0] || null,
     [displayResult, selectedDate, visibleDays],
+  )
+  const smartBalance = useMemo(
+    () => buildSmartBalanceSuggestions(displayResult?.days || [], selectedDay?.dateISO || "", SMART_BALANCER_LOS_NIGHTS),
+    [displayResult, selectedDay],
   )
 
   useEffect(() => {
@@ -328,6 +487,54 @@ export function MonthForecastDashboard({ compact = false, onForecastApplied }: M
             ))}
           </div>
 
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Smart Balancer</CardTitle>
+              <CardDescription>
+                Tests a {SMART_BALANCER_LOS_NIGHTS}-night LOS window from {formatDateLabel(selectedDay.dateISO)} and suggests upgrade moves that can cover the full window.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-sm text-slate-600">
+                Window: {smartBalance.windowDays.map((day) => formatDateLabel(day.dateISO)).join(" → ") || "not enough forecast days"}
+              </div>
+
+              {smartBalance.windowDays.length < SMART_BALANCER_LOS_NIGHTS && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  Not enough future days loaded to test a full {SMART_BALANCER_LOS_NIGHTS}-night window.
+                </div>
+              )}
+
+              {smartBalance.suggestions.length > 0 ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {smartBalance.suggestions.map((suggestion, index) => (
+                    <div key={`${suggestion.fromCode}-${suggestion.toCode}-${index}`} className="rounded-lg border bg-slate-50 p-3">
+                      <div className="text-sm font-semibold text-slate-900">
+                        Move {suggestion.moveCount} LOS {suggestion.losNights} reservation{suggestion.moveCount === 1 ? "" : "s"}
+                      </div>
+                      <div className="mt-1 text-sm text-slate-700">
+                        From <span className="font-semibold">{suggestion.fromCode}</span> ({suggestion.fromGroup}) → <span className="font-semibold">{suggestion.toCode}</span> ({suggestion.toGroup})
+                      </div>
+                      <div className="mt-2 text-xs text-slate-500">
+                        Helps: {suggestion.datesHelped.join(", ")} · Target has at least {suggestion.targetMinAvailable} open across the window.
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border bg-slate-50 p-3 text-sm text-slate-600">
+                  No clean upgrade move found for this {SMART_BALANCER_LOS_NIGHTS}-night window. Either nothing is oversold, or the upgrade targets are also tight. Because apparently inventory enjoys playing Jenga.
+                </div>
+              )}
+
+              {smartBalance.unresolvedShortages.length > 0 && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  Still short after upgrade suggestions: {smartBalance.unresolvedShortages.map((item) => `${item.roomCode} needs ${item.shortage}`).join(", ")}.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-800">Weekly Availability</h2>
@@ -389,7 +596,7 @@ export function MonthForecastDashboard({ compact = false, onForecastApplied }: M
                         <td className="p-2 text-slate-500" colSpan={6}>
                           {day.groups[group].rows.map((row) => {
                             const rowOccupied = row.arrivals + row.stayovers
-                            const rowAvailable = (FORECAST_ROOM_CODE_TOTALS[row.roomCode] ?? 0) - rowOccupied
+                            const rowAvailable = getRoomCodeInventory(row.roomCode) - rowOccupied
                             return (
                               <span key={`${row.roomCode}-${row.roomLabel}`} className={cn("mr-4 inline-block", availabilityClass(rowAvailable))}>
                                 {row.roomCode}: {rowAvailable} available / Arv {row.arrivals} / Dpt {row.departures} / Stay {row.stayovers}

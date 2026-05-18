@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { cn } from "@/lib/utils"
 import { useInventory } from "@/contexts/inventory-context"
 import type { DailyInventorySnapshot } from "@/lib/daily-inventory"
+import { loadCloudState, saveCloudState } from "@/lib/cloud-state"
 import {
   FORECAST_ROOM_CODE_TOTALS,
   FORECAST_ROOM_GROUPS,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/month-housekeeping-forecast"
 
 const STORAGE_KEY = "month-housekeeping-forecast-dashboard-v6"
+const CLOUD_STORAGE_KEY = "month-housekeeping-forecast-dashboard"
 const PARSE_ERROR = "Unable to parse housekeeping forecast. Please upload the Month Housekeeping Forecast PDF."
 const SMART_BALANCER_LOS_NIGHTS = 3
 
@@ -31,6 +33,12 @@ const UPGRADE_PATHS: Record<ForecastRoomGroup, ForecastRoomGroup[]> = {
 }
 
 type ForecastRoomRow = ForecastDay["groups"][ForecastRoomGroup]["rows"][number]
+
+type ForecastDashboardStoredState = {
+  result: ForecastParseResult
+  selectedDate: string
+  fileName: string
+}
 
 type RoomCodeBalanceStats = {
   roomCode: string
@@ -433,20 +441,31 @@ export function MonthForecastDashboard({ compact = false, onForecastApplied }: M
   const [fileName, setFileName] = useState("")
 
   useEffect(() => {
+    let cancelled = false
+    const applyStored = (stored: ForecastDashboardStoredState | null | undefined) => {
+      if (!stored?.result?.days?.length || cancelled) return false
+      setResult(stored.result)
+      setSelectedDate(stored.selectedDate || stored.result.days[0].dateISO)
+      setFileName(stored.fileName || "")
+      return true
+    }
+
     const saved = localStorage.getItem(STORAGE_KEY)
-    if (!saved) return
-    try {
-      const parsed = JSON.parse(saved) as {
-        result: ForecastParseResult
-        selectedDate: string
-        fileName: string
+    if (saved) {
+      try {
+        applyStored(JSON.parse(saved) as ForecastDashboardStoredState)
+      } catch {
+        localStorage.removeItem(STORAGE_KEY)
       }
-      if (!parsed.result?.days?.length) return
-      setResult(parsed.result)
-      setSelectedDate(parsed.selectedDate || parsed.result.days[0].dateISO)
-      setFileName(parsed.fileName || "")
-    } catch {
-      localStorage.removeItem(STORAGE_KEY)
+    }
+
+    void loadCloudState<ForecastDashboardStoredState>(CLOUD_STORAGE_KEY).then((cloudState) => {
+      if (!applyStored(cloudState)) return
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudState))
+    })
+
+    return () => {
+      cancelled = true
     }
   }, [])
 
@@ -471,7 +490,9 @@ export function MonthForecastDashboard({ compact = false, onForecastApplied }: M
   useEffect(() => {
     if (!result?.days?.length) return
     const day = result.days.find((item) => item.dateISO === selectedDate) || result.days[0]
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ result, selectedDate: day.dateISO, fileName }))
+    const stored: ForecastDashboardStoredState = { result, selectedDate: day.dateISO, fileName }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
+    void saveCloudState(CLOUD_STORAGE_KEY, stored)
   }, [fileName, result, selectedDate])
 
   const processFile = async (file: File) => {

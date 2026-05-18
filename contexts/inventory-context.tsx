@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import {
   ROOM_TOTAL,
   ROOM_TYPE_MAP,
@@ -84,6 +84,7 @@ type InventoryContextType = InventoryState & {
 
 const STORAGE_KEY = "hotel-inventory-state"
 const CLOUD_DAILY_INVENTORY_KEY = "daily-inventory-snapshot"
+const CLOUD_POLL_MS = 15000
 
 const todayIso = () => new Date().toISOString().split("T")[0]
 
@@ -181,6 +182,21 @@ const metricsFromSnapshot = (snapshotInput: DailyInventorySnapshot): DailyMetric
   }
 }
 
+const snapshotSignature = (snapshotInput?: Partial<DailyInventorySnapshot> | null) => {
+  const snapshot = sanitizeSnapshot(snapshotInput)
+  return JSON.stringify({
+    dateLabel: snapshot.dateLabel,
+    available: snapshot.available,
+    committed: snapshot.committed,
+    arrivals: snapshot.arrivals,
+    departures: snapshot.departures,
+    stayovers: snapshot.stayovers,
+    occupancy: snapshot.occupancy,
+    rooms: snapshot.rooms,
+    updatedAt: snapshot.updatedAt,
+  })
+}
+
 const defaultState = (): InventoryState => {
   const currentDate = todayIso()
   const snapshot = defaultSnapshot()
@@ -213,9 +229,13 @@ const applySnapshotToState = (state: InventoryState, snapshotInput: DailyInvento
 }
 
 const persistSnapshot = (snapshotInput: DailyInventorySnapshot) => {
-  const snapshot = sanitizeSnapshot(snapshotInput)
+  const snapshot = sanitizeSnapshot({
+    ...snapshotInput,
+    updatedAt: snapshotInput.updatedAt || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+  })
   saveDailyInventory(snapshot)
   void saveCloudState(CLOUD_DAILY_INVENTORY_KEY, snapshot)
+  return snapshot
 }
 
 const InventoryContext = createContext<InventoryContextType | null>(null)
@@ -223,6 +243,24 @@ const InventoryContext = createContext<InventoryContextType | null>(null)
 export function InventoryProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<InventoryState>(() => defaultState())
   const [isHydrated, setIsHydrated] = useState(false)
+  const lastAppliedCloudSignature = useRef<string | null>(null)
+  const lastLocalWriteAt = useRef(0)
+
+  const applyCloudSnapshot = useCallback((cloudSnapshot: DailyInventorySnapshot | null) => {
+    if (!cloudSnapshot) return
+    const cleanSnapshot = sanitizeSnapshot(cloudSnapshot)
+    const signature = snapshotSignature(cleanSnapshot)
+
+    if (signature === lastAppliedCloudSignature.current) return
+    if (Date.now() - lastLocalWriteAt.current < 3000) return
+
+    lastAppliedCloudSignature.current = signature
+    saveDailyInventory(cleanSnapshot)
+    setState((prev) => {
+      if (snapshotSignature(prev.dailyInventorySnapshot) === signature) return prev
+      return applySnapshotToState(prev, cleanSnapshot)
+    })
+  }, [])
 
   useEffect(() => {
     const today = todayIso()
@@ -233,6 +271,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     try {
       const parsed = stored ? JSON.parse(stored) : {}
       const nextSnapshot = sanitizeSnapshot(snapshot || parsed.dailyInventorySnapshot || base.dailyInventorySnapshot)
+      lastAppliedCloudSignature.current = snapshotSignature(nextSnapshot)
       setState({
         ...base,
         ...parsed,
@@ -244,6 +283,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         checklistUnlocked: parsed.checklistUnlocked || base.checklistUnlocked,
       })
     } catch {
+      lastAppliedCloudSignature.current = snapshotSignature(snapshot)
       setState(applySnapshotToState(base, snapshot))
     }
     setIsHydrated(true)
@@ -253,25 +293,35 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     if (!isHydrated) return
     let cancelled = false
 
-    void loadCloudState<DailyInventorySnapshot>(CLOUD_DAILY_INVENTORY_KEY).then((cloudSnapshot) => {
-      if (cancelled || !cloudSnapshot) return
-      const cleanSnapshot = sanitizeSnapshot(cloudSnapshot)
-      saveDailyInventory(cleanSnapshot)
-      setState((prev) => applySnapshotToState(prev, cleanSnapshot))
-    })
+    const refreshCloud = () => {
+      void loadCloudState<DailyInventorySnapshot>(CLOUD_DAILY_INVENTORY_KEY).then((cloudSnapshot) => {
+        if (cancelled) return
+        applyCloudSnapshot(cloudSnapshot)
+      })
+    }
+
+    refreshCloud()
+    const interval = window.setInterval(refreshCloud, CLOUD_POLL_MS)
+    window.addEventListener("focus", refreshCloud)
+    document.addEventListener("visibilitychange", refreshCloud)
 
     return () => {
       cancelled = true
+      window.clearInterval(interval)
+      window.removeEventListener("focus", refreshCloud)
+      document.removeEventListener("visibilitychange", refreshCloud)
     }
-  }, [isHydrated])
+  }, [applyCloudSnapshot, isHydrated])
 
   useEffect(() => {
     if (isHydrated) localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }, [isHydrated, state])
 
   const setDailyInventorySnapshot = useCallback((snapshot: DailyInventorySnapshot) => {
-    persistSnapshot(snapshot)
-    setState((prev) => applySnapshotToState(prev, snapshot))
+    lastLocalWriteAt.current = Date.now()
+    const persisted = persistSnapshot(snapshot)
+    lastAppliedCloudSignature.current = snapshotSignature(persisted)
+    setState((prev) => applySnapshotToState(prev, persisted))
   }, [])
 
   useEffect(() => {
@@ -309,8 +359,10 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     setState((prev) => {
       const todayInventory = { ...prev.todayInventory, [roomCode]: Math.max(0, value) }
       const snapshot = updateSnapshotFromInventory(todayInventory, prev.todayMetrics)
-      persistSnapshot(snapshot)
-      return applySnapshotToState({ ...prev, todayInventory }, snapshot)
+      lastLocalWriteAt.current = Date.now()
+      const persisted = persistSnapshot(snapshot)
+      lastAppliedCloudSignature.current = snapshotSignature(persisted)
+      return applySnapshotToState({ ...prev, todayInventory }, persisted)
     })
   }, [updateSnapshotFromInventory])
 
@@ -327,8 +379,10 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       const nextMetrics = { ...prev.todayMetrics, ...metrics }
       nextMetrics.stayovers = calculateStayovers(nextMetrics.departures)
       const snapshot = updateSnapshotFromInventory(prev.todayInventory, nextMetrics)
-      persistSnapshot(snapshot)
-      return applySnapshotToState(prev, snapshot)
+      lastLocalWriteAt.current = Date.now()
+      const persisted = persistSnapshot(snapshot)
+      lastAppliedCloudSignature.current = snapshotSignature(persisted)
+      return applySnapshotToState(prev, persisted)
     })
   }, [updateSnapshotFromInventory])
 
@@ -345,8 +399,10 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       if (isForTomorrow) return { ...prev, tomorrowInventory: inventory }
       const available = totalAvailableRooms(rooms)
       const snapshot = sanitizeSnapshot({ ...prev.dailyInventorySnapshot, rooms, available, occupancy: calculateOccupancy(available), updatedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) })
-      persistSnapshot(snapshot)
-      return applySnapshotToState({ ...prev, todayInventory: inventory }, snapshot)
+      lastLocalWriteAt.current = Date.now()
+      const persisted = persistSnapshot(snapshot)
+      lastAppliedCloudSignature.current = snapshotSignature(persisted)
+      return applySnapshotToState({ ...prev, todayInventory: inventory }, persisted)
     })
   }, [])
 

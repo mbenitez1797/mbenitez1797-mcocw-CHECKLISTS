@@ -13,6 +13,7 @@ import {
   type DailyInventorySnapshot,
   type RoomBucket,
 } from "@/lib/daily-inventory"
+import { loadCloudState, saveCloudState } from "@/lib/cloud-state"
 
 export const ROOM_CODES = {
   KING: ROOM_TYPE_MAP.KING,
@@ -82,6 +83,7 @@ type InventoryContextType = InventoryState & {
 }
 
 const STORAGE_KEY = "hotel-inventory-state"
+const CLOUD_DAILY_INVENTORY_KEY = "daily-inventory-snapshot"
 
 const todayIso = () => new Date().toISOString().split("T")[0]
 
@@ -160,6 +162,19 @@ const defaultState = (): InventoryState => {
   }
 }
 
+const applySnapshotToState = (state: InventoryState, snapshot: DailyInventorySnapshot): InventoryState => ({
+  ...state,
+  dailyInventorySnapshot: snapshot,
+  todayInventory: inventoryFromRooms(snapshot.rooms),
+  todayMetrics: metricsFromSnapshot(snapshot),
+  lastSync: snapshot.updatedAt,
+})
+
+const persistSnapshot = (snapshot: DailyInventorySnapshot) => {
+  saveDailyInventory(snapshot)
+  void saveCloudState(CLOUD_DAILY_INVENTORY_KEY, snapshot)
+}
+
 const InventoryContext = createContext<InventoryContextType | null>(null)
 
 export function InventoryProvider({ children }: { children: ReactNode }) {
@@ -186,37 +201,40 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         checklistUnlocked: parsed.checklistUnlocked || base.checklistUnlocked,
       })
     } catch {
-      setState(snapshot ? { ...base, dailyInventorySnapshot: snapshot, todayInventory: inventoryFromRooms(snapshot.rooms), todayMetrics: metricsFromSnapshot(snapshot) } : base)
+      setState(snapshot ? applySnapshotToState(base, snapshot) : base)
     }
     setIsHydrated(true)
   }, [])
+
+  useEffect(() => {
+    if (!isHydrated) return
+    let cancelled = false
+
+    void loadCloudState<DailyInventorySnapshot>(CLOUD_DAILY_INVENTORY_KEY).then((cloudSnapshot) => {
+      if (cancelled || !cloudSnapshot?.rooms) return
+      saveDailyInventory(cloudSnapshot)
+      setState((prev) => applySnapshotToState(prev, cloudSnapshot))
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isHydrated])
 
   useEffect(() => {
     if (isHydrated) localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }, [isHydrated, state])
 
   const setDailyInventorySnapshot = useCallback((snapshot: DailyInventorySnapshot) => {
-    saveDailyInventory(snapshot)
-    setState((prev) => ({
-      ...prev,
-      dailyInventorySnapshot: snapshot,
-      todayInventory: inventoryFromRooms(snapshot.rooms),
-      todayMetrics: metricsFromSnapshot(snapshot),
-      lastSync: snapshot.updatedAt,
-    }))
+    persistSnapshot(snapshot)
+    setState((prev) => applySnapshotToState(prev, snapshot))
   }, [])
 
   useEffect(() => {
     const onSnapshot = (event: Event) => {
       const snapshot = (event as CustomEvent<DailyInventorySnapshot>).detail
       if (snapshot) {
-        setState((prev) => ({
-          ...prev,
-          dailyInventorySnapshot: snapshot,
-          todayInventory: inventoryFromRooms(snapshot.rooms),
-          todayMetrics: metricsFromSnapshot(snapshot),
-          lastSync: snapshot.updatedAt,
-        }))
+        setState((prev) => applySnapshotToState(prev, snapshot))
       }
     }
     window.addEventListener("daily-inventory-updated", onSnapshot)
@@ -249,8 +267,8 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     setState((prev) => {
       const todayInventory = { ...prev.todayInventory, [roomCode]: Math.max(0, value) }
       const snapshot = updateSnapshotFromInventory(todayInventory, prev.todayMetrics)
-      saveDailyInventory(snapshot)
-      return { ...prev, todayInventory, dailyInventorySnapshot: snapshot, todayMetrics: metricsFromSnapshot(snapshot), lastSync: snapshot.updatedAt }
+      persistSnapshot(snapshot)
+      return applySnapshotToState({ ...prev, todayInventory }, snapshot)
     })
   }, [updateSnapshotFromInventory])
 
@@ -267,8 +285,8 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       const nextMetrics = { ...prev.todayMetrics, ...metrics }
       nextMetrics.stayovers = calculateStayovers(nextMetrics.departures)
       const snapshot = updateSnapshotFromInventory(prev.todayInventory, nextMetrics)
-      saveDailyInventory(snapshot)
-      return { ...prev, todayMetrics: metricsFromSnapshot(snapshot), dailyInventorySnapshot: snapshot, lastSync: snapshot.updatedAt }
+      persistSnapshot(snapshot)
+      return applySnapshotToState(prev, snapshot)
     })
   }, [updateSnapshotFromInventory])
 
@@ -285,8 +303,8 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       if (isForTomorrow) return { ...prev, tomorrowInventory: inventory }
       const available = totalAvailableRooms(rooms)
       const snapshot = { ...prev.dailyInventorySnapshot, rooms, available, occupancy: calculateOccupancy(available), updatedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }
-      saveDailyInventory(snapshot)
-      return { ...prev, todayInventory: inventory, dailyInventorySnapshot: snapshot, todayMetrics: metricsFromSnapshot(snapshot), lastSync: snapshot.updatedAt }
+      persistSnapshot(snapshot)
+      return applySnapshotToState({ ...prev, todayInventory: inventory }, snapshot)
     })
   }, [])
 

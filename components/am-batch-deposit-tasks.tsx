@@ -38,8 +38,8 @@ export function AMBatchDepositTasks() {
       <ChecklistTask
         id="collectDayOfDeposits"
         label="Collect day-of deposits and prepare incidental folios"
-        instruction="Stay PMS > Front Desk > Check-In > review the Subtype Card. Look for arrivals where subtype says Virtual Card or is blank. These are usually third-party reservations or redemption stays. Open each reservation, manually take the required payment/deposit, and set up a folio for incidentals so check-in does not become a tiny financial hostage situation."
-        expandedInstruction="Open the Check-In view and scan the Subtype Card. Prioritize reservations marked Virtual Card or with a blank subtype. For each one, open the reservation, verify the payment source, manually take payment when appropriate, and set up incidentals/routing so the guest can be checked in smoothly."
+        instruction="Stay PMS > Front Desk > Batch Operations > Check-In > review the Subtype Card. Look for arrivals where subtype says Virtual Card or is blank. These are usually third-party reservations or redemption stays. Open each reservation, manually take the required payment/deposit, then create the incidental folio by going to Routing Rules and adding Incidentals Only. This keeps check-in from becoming a tiny financial hostage situation."
+        expandedInstruction="Go to Stay PMS > Front Desk > Batch Operations > Check-In. Scan the Subtype Card and prioritize reservations marked Virtual Card or with a blank subtype. For each one, open the reservation, verify the payment source, manually take the required payment/deposit when appropriate, then go to Routing Rules and add Incidentals Only to create the incidental folio."
         systems={["Stay PMS", "Ledger"]}
         checked={dayOfDepositsPrepared}
         onCheckedChange={setDayOfDepositsPrepared}

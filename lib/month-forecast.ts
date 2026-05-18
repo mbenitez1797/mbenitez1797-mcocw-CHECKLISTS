@@ -7,6 +7,9 @@ export const FIXED_ROOM_TOTALS = {
 } as const
 
 export const TOTAL_PROPERTY_INVENTORY = 111
+export const FORECAST_PARSE_ERROR_MESSAGE =
+  "This upload parsed incorrectly. The report appears to have read summary totals as room-type activity. Please re-upload or check parser."
+const REASONABLE_OVERSELL_BUFFER = 10
 
 export const FIXED_ROOM_CODES = {
   KING: { RM1K0006: 30, RM1KA0008: 8, RM1KA0009: 1 },
@@ -94,6 +97,15 @@ function emptyRooms(): ForecastDay["rooms"] {
   }, {} as ForecastDay["rooms"])
 }
 
+function isImpossibleRoomActivity(arrivals: number, departures: number, stayovers: number) {
+  return (
+    arrivals > TOTAL_PROPERTY_INVENTORY ||
+    departures > TOTAL_PROPERTY_INVENTORY ||
+    stayovers > TOTAL_PROPERTY_INVENTORY ||
+    arrivals + stayovers > TOTAL_PROPERTY_INVENTORY
+  )
+}
+
 function finalizeDay(partial: Partial<ForecastDay> & { rooms?: ForecastDay["rooms"] }, warnings: string[]): ForecastDay | null {
   if (!partial.date && !partial.label) return null
 
@@ -171,11 +183,65 @@ export function recalculateParsedForecast(forecast: ParsedForecast): ParsedForec
   }
 }
 
+export function validateParsedForecast(forecast: ParsedForecast): string[] {
+  const errors: string[] = []
+
+  for (const day of forecast.days || []) {
+    if (day.arrivals > TOTAL_PROPERTY_INVENTORY) {
+      errors.push(`${day.label}: arrivals exceed property inventory.`)
+    }
+
+    if (day.departures > TOTAL_PROPERTY_INVENTORY) {
+      errors.push(`${day.label}: departures exceed property inventory.`)
+    }
+
+    if (day.stayovers > TOTAL_PROPERTY_INVENTORY) {
+      errors.push(`${day.label}: stayovers exceed property inventory.`)
+    }
+
+    if (day.occupied > TOTAL_PROPERTY_INVENTORY + REASONABLE_OVERSELL_BUFFER) {
+      errors.push(`${day.label}: occupied total exceeds the allowed oversell buffer.`)
+    }
+
+    const groupOccupied = GROUPS.map((group) => day.rooms[group].occupied)
+    const maxGroupOccupied = Math.max(0, ...groupOccupied)
+
+    for (const group of GROUPS) {
+      const room = day.rooms[group]
+      if (room.arrivals > TOTAL_PROPERTY_INVENTORY || room.stayovers > TOTAL_PROPERTY_INVENTORY) {
+        errors.push(`${day.label}: ${group} activity exceeds property inventory.`)
+      }
+
+      if (room.occupied > TOTAL_PROPERTY_INVENTORY) {
+        errors.push(`${day.label}: ${group} occupied exceeds property inventory.`)
+      }
+    }
+
+    if (day.occupied > TOTAL_PROPERTY_INVENTORY && maxGroupOccupied >= day.occupied * 0.9) {
+      errors.push(`${day.label}: nearly all activity was assigned to one room group.`)
+    }
+  }
+
+  return errors
+}
+
+export function assertValidParsedForecast(forecast: ParsedForecast): ParsedForecast {
+  const recalculated = recalculateParsedForecast(forecast)
+  const errors = validateParsedForecast(recalculated)
+
+  if (!recalculated.days.length || errors.length) {
+    throw new Error(FORECAST_PARSE_ERROR_MESSAGE)
+  }
+
+  return recalculated
+}
+
 export function parseMonthForecastText(text: string, sourceName = "Month Housekeeping Forecast"): ParsedForecast {
   const warnings: string[] = []
   const clean = text.replace(/\u0000/g, " ").replace(/\s+/g, " ")
   const lines = text.replace(/\u0000/g, " ").split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
   const days: ForecastDay[] = []
+  let rejectedImpossibleDay = false
 
   for (const line of lines) {
     const date = normalizeDate(line)
@@ -205,16 +271,38 @@ export function parseMonthForecastText(text: string, sourceName = "Month Houseke
     for (const group of GROUPS) {
       const groupMatch = line.match(new RegExp(`\\b${group}\\b[^\\n]*?(?:arr(?:ivals?)?)?\\D*(-?\\d+)[^\\n]*?(?:stay(?:overs?)?)?\\D*(-?\\d+)`, "i"))
       if (groupMatch) {
-        day.rooms[group].arrivals = numberValue(groupMatch[1])
-        day.rooms[group].stayovers = numberValue(groupMatch[2])
+        const arrivals = numberValue(groupMatch[1])
+        const stayovers = numberValue(groupMatch[2])
+
+        if (isImpossibleRoomActivity(arrivals, 0, stayovers)) {
+          warnings.push(`${day.label}: ignored impossible ${group} activity row.`)
+          continue
+        }
+
+        day.rooms[group].arrivals = arrivals
+        day.rooms[group].stayovers = stayovers
       }
     }
 
     const finalized = finalizeDay(day, warnings)
-    if (finalized) days.push(finalized)
+    if (finalized) {
+      const validationErrors = validateParsedForecast({
+        sourceName,
+        parsedAt: new Date().toISOString(),
+        days: [finalized],
+        warnings,
+      })
+
+      if (validationErrors.length) {
+        rejectedImpossibleDay = true
+        warnings.push(`${finalized.label}: rejected impossible forecast day.`)
+      } else {
+        days.push(finalized)
+      }
+    }
   }
 
-  if (!days.length) {
+  if (!days.length && !rejectedImpossibleDay) {
     const dateMatches = Array.from(clean.matchAll(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g)).slice(0, 31)
     for (const match of dateMatches) {
       const finalized = finalizeDay({ date: normalizeDate(match[0]), label: match[0], rooms: emptyRooms() }, warnings)
@@ -241,7 +329,7 @@ export function loadSavedForecast(): ParsedForecast | null {
     const raw = localStorage.getItem("month-housekeeping-forecast")
     if (!raw) return null
     const parsed = JSON.parse(raw) as ParsedForecast
-    return Array.isArray(parsed.days) ? recalculateParsedForecast(parsed) : null
+    return Array.isArray(parsed.days) ? assertValidParsedForecast(parsed) : null
   } catch {
     localStorage.removeItem("month-housekeeping-forecast")
     return null
@@ -250,7 +338,7 @@ export function loadSavedForecast(): ParsedForecast | null {
 
 export function saveForecast(forecast: ParsedForecast) {
   if (typeof window === "undefined") return
-  localStorage.setItem("month-housekeeping-forecast", JSON.stringify(forecast))
+  localStorage.setItem("month-housekeeping-forecast", JSON.stringify(assertValidParsedForecast(forecast)))
 }
 
 export function clearSavedForecast() {

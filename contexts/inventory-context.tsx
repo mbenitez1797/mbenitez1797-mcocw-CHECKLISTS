@@ -327,7 +327,14 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onSnapshot = (event: Event) => {
       const snapshot = (event as CustomEvent<DailyInventorySnapshot>).detail
-      if (snapshot) setState((prev) => applySnapshotToState(prev, snapshot))
+      if (!snapshot) return
+
+      const cleanSnapshot = sanitizeSnapshot(snapshot)
+      const signature = snapshotSignature(cleanSnapshot)
+      lastLocalWriteAt.current = Date.now()
+      lastAppliedCloudSignature.current = signature
+      void saveCloudState(CLOUD_DAILY_INVENTORY_KEY, cleanSnapshot)
+      setState((prev) => applySnapshotToState(prev, cleanSnapshot))
     }
     window.addEventListener("daily-inventory-updated", onSnapshot)
     return () => window.removeEventListener("daily-inventory-updated", onSnapshot)

@@ -23,6 +23,16 @@ import {
 
 const STORAGE_KEY = "am-streamlined-checklist-draft"
 
+const coordinatePriorityRoomsTask = {
+  id: amTasks.coordinatePriorityRooms.id,
+  label: "Mobile check-in and prioritize rooms with housekeeping",
+  instruction:
+    "Stay PMS > Dashboard > Digital Requests > Total Requests > sort by Status. Review every reservation on that list and check arrival time. Try to assign mobile check-ins with digital keys to VR rooms first. If a VR room is not available, tell housekeeping how many of each room type you need so they can provide a list of rooms that will be ready soon.",
+  expandedInstruction:
+    "Go to Dashboard, then Digital Requests, then Total Requests. Sort by Status and review each reservation on the list. Check the expected arrival time, prioritize mobile check-ins/digital key requests, and try to assign them to Vacant Ready rooms. If the needed room type is not VR, communicate the exact count by room type to housekeeping so they can identify which rooms will be ready soon.",
+  systems: amTasks.coordinatePriorityRooms.systems,
+}
+
 const amSystems = [
   { name: "Stay PMS", icon: Monitor, description: "Reservations, rooms, folios" },
   { name: "GXP", icon: MessageSquare, description: "Guest requests & issues" },
@@ -112,15 +122,11 @@ export function StreamlinedAMForm() {
   }
 
   const nextStep = () => {
-    if (currentStep < STREAMLINED_STEPS.length - 1) {
-      setCurrentStep(currentStep + 1)
-    }
+    if (currentStep < STREAMLINED_STEPS.length - 1) setCurrentStep(currentStep + 1)
   }
 
   const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
-    }
+    if (currentStep > 0) setCurrentStep(currentStep - 1)
   }
 
   const getCompletedTaskLabels = (): string[] => {
@@ -173,9 +179,7 @@ export function StreamlinedAMForm() {
           <p className="text-muted-foreground max-w-md">
             Your AM Front Desk Checklist has been successfully submitted. The PM shift team has been notified.
           </p>
-          {result?.oneDrive?.fileUrl && (
-            <p className="text-sm text-muted-foreground">A copy has been saved to OneDrive.</p>
-          )}
+          {result?.oneDrive?.fileUrl && <p className="text-sm text-muted-foreground">A copy has been saved to OneDrive.</p>}
           <div className="flex gap-3 mt-4">
             <Button
               variant="outline"
@@ -304,7 +308,21 @@ export function StreamlinedAMForm() {
 
       {currentStep === 2 && (
         <ChecklistSection title="Critical Tasks" description="Execute priority tasks for the shift">
-          <Controller name="coordinatePriorityRooms" control={control} render={({ field }) => <ChecklistTask id={amTasks.coordinatePriorityRooms.id} label={amTasks.coordinatePriorityRooms.label} instruction={amTasks.coordinatePriorityRooms.instruction} systems={amTasks.coordinatePriorityRooms.systems} checked={field.value} onCheckedChange={field.onChange} />} />
+          <Controller
+            name="coordinatePriorityRooms"
+            control={control}
+            render={({ field }) => (
+              <ChecklistTask
+                id={coordinatePriorityRoomsTask.id}
+                label={coordinatePriorityRoomsTask.label}
+                instruction={coordinatePriorityRoomsTask.instruction}
+                expandedInstruction={coordinatePriorityRoomsTask.expandedInstruction}
+                systems={coordinatePriorityRoomsTask.systems}
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
           <Controller name="reviewGXPRequests" control={control} render={({ field }) => <ChecklistTask id={amTasks.reviewGXPRequests.id} label={amTasks.reviewGXPRequests.label} instruction={amTasks.reviewGXPRequests.instruction} systems={amTasks.reviewGXPRequests.systems} checked={field.value} onCheckedChange={field.onChange} />} />
           <Controller name="reviewPaymentProfiles" control={control} render={({ field }) => <ChecklistTask id={amTasks.reviewPaymentProfiles.id} label={amTasks.reviewPaymentProfiles.label} instruction={amTasks.reviewPaymentProfiles.instruction} systems={amTasks.reviewPaymentProfiles.systems} checked={field.value} onCheckedChange={field.onChange} />} />
           <Controller name="reviewGroups" control={control} render={({ field }) => <ChecklistTask id={amTasks.reviewGroups.id} label={amTasks.reviewGroups.label} instruction={amTasks.reviewGroups.instruction} systems={amTasks.reviewGroups.systems} checked={field.value} onCheckedChange={field.onChange} />} />

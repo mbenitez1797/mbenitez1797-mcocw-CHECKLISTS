@@ -23,6 +23,10 @@ function validateKey(value: string | null) {
   return ALLOWED_KEYS.has(key) ? key : null
 }
 
+function safeTablePath(table: string) {
+  return encodeURIComponent(table).replace(/%2E/g, ".")
+}
+
 async function supabaseFetch(path: string, init?: RequestInit) {
   const { url, serviceKey } = supabaseConfig()
   if (!url || !serviceKey) {
@@ -47,7 +51,7 @@ export async function GET(request: Request) {
   const { table } = supabaseConfig()
 
   try {
-    const response = await supabaseFetch(`${table}?key=eq.${encodeURIComponent(key)}&select=key,value,updated_at&limit=1`, {
+    const response = await supabaseFetch(`${safeTablePath(table)}?key=eq.${encodeURIComponent(key)}&select=key,value,updated_at&limit=1`, {
       method: "GET",
       cache: "no-store",
     })
@@ -80,7 +84,7 @@ export async function PUT(request: Request) {
   const { table } = supabaseConfig()
 
   try {
-    const response = await supabaseFetch(table, {
+    const response = await supabaseFetch(`${safeTablePath(table)}?on_conflict=key`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

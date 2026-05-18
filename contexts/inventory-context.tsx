@@ -98,6 +98,11 @@ export const formatDisplayDate = (dateStr: string) => {
   return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
 }
 
+const safeNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
 const createEmptyInventory = (): RoomInventory => {
   const inventory: RoomInventory = {}
   Object.values(ROOM_TYPE_MAP).flat().forEach((code) => {
@@ -106,7 +111,8 @@ const createEmptyInventory = (): RoomInventory => {
   return inventory
 }
 
-const inventoryFromRooms = (rooms: RoomBucket): RoomInventory => {
+const inventoryFromRooms = (roomsInput?: Partial<RoomBucket> | null): RoomInventory => {
+  const rooms = sanitizeRooms(roomsInput)
   const inventory = createEmptyInventory()
   inventory[ROOM_TYPE_MAP.KING[0]] = rooms.KING
   inventory[ROOM_TYPE_MAP.VIKG[0]] = rooms.VIKG
@@ -115,6 +121,14 @@ const inventoryFromRooms = (rooms: RoomBucket): RoomInventory => {
   inventory[ROOM_TYPE_MAP.SUITES[0]] = rooms.SUITES
   return inventory
 }
+
+const sanitizeRooms = (roomsInput?: Partial<RoomBucket> | null): RoomBucket => ({
+  KING: safeNumber(roomsInput?.KING),
+  VIKG: safeNumber(roomsInput?.VIKG),
+  QUEEN: safeNumber(roomsInput?.QUEEN),
+  VIQN: safeNumber(roomsInput?.VIQN),
+  SUITES: safeNumber(roomsInput?.SUITES),
+})
 
 const totalFor = (inventory: RoomInventory, codes: readonly string[]) => codes.reduce((sum, code) => sum + (inventory[code] || 0), 0)
 
@@ -135,12 +149,37 @@ const defaultSnapshot = (): DailyInventorySnapshot => ({
   updatedAt: "Not synced",
 })
 
-const metricsFromSnapshot = (snapshot: DailyInventorySnapshot): DailyMetrics => ({
-  arrivals: snapshot.arrivals,
-  departures: snapshot.departures,
-  stayovers: snapshot.stayovers,
-  occupancy: snapshot.occupancy,
-})
+const sanitizeSnapshot = (input?: Partial<DailyInventorySnapshot> | null): DailyInventorySnapshot => {
+  const base = defaultSnapshot()
+  const rooms = sanitizeRooms(input?.rooms)
+  return {
+    ...base,
+    ...input,
+    roomTotal: safeNumber(input?.roomTotal, ROOM_TOTAL),
+    available: safeNumber(input?.available, totalAvailableRooms(rooms)),
+    committed: safeNumber(input?.committed),
+    arrivals: safeNumber(input?.arrivals),
+    departures: safeNumber(input?.departures),
+    stayovers: safeNumber(input?.stayovers, ROOM_TOTAL),
+    groupsRemaining: safeNumber(input?.groupsRemaining),
+    occupancy: String(input?.occupancy || base.occupancy),
+    oooOtm: String(input?.oooOtm || base.oooOtm),
+    guests: String(input?.guests || base.guests),
+    rooms,
+    recommendations: Array.isArray(input?.recommendations) ? input!.recommendations as string[] : base.recommendations,
+    updatedAt: String(input?.updatedAt || base.updatedAt),
+  }
+}
+
+const metricsFromSnapshot = (snapshotInput: DailyInventorySnapshot): DailyMetrics => {
+  const snapshot = sanitizeSnapshot(snapshotInput)
+  return {
+    arrivals: snapshot.arrivals,
+    departures: snapshot.departures,
+    stayovers: snapshot.stayovers,
+    occupancy: snapshot.occupancy,
+  }
+}
 
 const defaultState = (): InventoryState => {
   const currentDate = todayIso()
@@ -162,15 +201,19 @@ const defaultState = (): InventoryState => {
   }
 }
 
-const applySnapshotToState = (state: InventoryState, snapshot: DailyInventorySnapshot): InventoryState => ({
-  ...state,
-  dailyInventorySnapshot: snapshot,
-  todayInventory: inventoryFromRooms(snapshot.rooms),
-  todayMetrics: metricsFromSnapshot(snapshot),
-  lastSync: snapshot.updatedAt,
-})
+const applySnapshotToState = (state: InventoryState, snapshotInput: DailyInventorySnapshot): InventoryState => {
+  const snapshot = sanitizeSnapshot(snapshotInput)
+  return {
+    ...state,
+    dailyInventorySnapshot: snapshot,
+    todayInventory: inventoryFromRooms(snapshot.rooms),
+    todayMetrics: metricsFromSnapshot(snapshot),
+    lastSync: snapshot.updatedAt,
+  }
+}
 
-const persistSnapshot = (snapshot: DailyInventorySnapshot) => {
+const persistSnapshot = (snapshotInput: DailyInventorySnapshot) => {
+  const snapshot = sanitizeSnapshot(snapshotInput)
   saveDailyInventory(snapshot)
   void saveCloudState(CLOUD_DAILY_INVENTORY_KEY, snapshot)
 }
@@ -184,12 +227,12 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const today = todayIso()
     const base = defaultState()
-    const snapshot = loadDailyInventory()
+    const snapshot = sanitizeSnapshot(loadDailyInventory())
     const stored = localStorage.getItem(STORAGE_KEY)
 
     try {
       const parsed = stored ? JSON.parse(stored) : {}
-      const nextSnapshot = snapshot || parsed.dailyInventorySnapshot || base.dailyInventorySnapshot
+      const nextSnapshot = sanitizeSnapshot(snapshot || parsed.dailyInventorySnapshot || base.dailyInventorySnapshot)
       setState({
         ...base,
         ...parsed,
@@ -201,7 +244,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         checklistUnlocked: parsed.checklistUnlocked || base.checklistUnlocked,
       })
     } catch {
-      setState(snapshot ? applySnapshotToState(base, snapshot) : base)
+      setState(applySnapshotToState(base, snapshot))
     }
     setIsHydrated(true)
   }, [])
@@ -211,9 +254,10 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     let cancelled = false
 
     void loadCloudState<DailyInventorySnapshot>(CLOUD_DAILY_INVENTORY_KEY).then((cloudSnapshot) => {
-      if (cancelled || !cloudSnapshot?.rooms) return
-      saveDailyInventory(cloudSnapshot)
-      setState((prev) => applySnapshotToState(prev, cloudSnapshot))
+      if (cancelled || !cloudSnapshot) return
+      const cleanSnapshot = sanitizeSnapshot(cloudSnapshot)
+      saveDailyInventory(cleanSnapshot)
+      setState((prev) => applySnapshotToState(prev, cleanSnapshot))
     })
 
     return () => {
@@ -233,9 +277,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onSnapshot = (event: Event) => {
       const snapshot = (event as CustomEvent<DailyInventorySnapshot>).detail
-      if (snapshot) {
-        setState((prev) => applySnapshotToState(prev, snapshot))
-      }
+      if (snapshot) setState((prev) => applySnapshotToState(prev, snapshot))
     }
     window.addEventListener("daily-inventory-updated", onSnapshot)
     return () => window.removeEventListener("daily-inventory-updated", onSnapshot)
@@ -250,7 +292,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       SUITES: totalFor(inventory, ROOM_TYPE_MAP.SUITES),
     }
     const available = totalAvailableRooms(rooms)
-    return {
+    return sanitizeSnapshot({
       ...state.dailyInventorySnapshot,
       roomTotal: ROOM_TOTAL,
       available,
@@ -260,7 +302,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       occupancy: calculateOccupancy(available),
       rooms,
       updatedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    }
+    })
   }, [state.dailyInventorySnapshot])
 
   const updateTodayInventory = useCallback((roomCode: string, value: number) => {
@@ -292,17 +334,17 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
 
   const setExtractedRoomTotals = useCallback((totals: Partial<RoomBucket> & { QUEENS?: number }, isForTomorrow = false) => {
     const rooms: RoomBucket = {
-      KING: totals.KING || 0,
-      VIKG: totals.VIKG || 0,
-      QUEEN: totals.QUEEN ?? totals.QUEENS ?? 0,
-      VIQN: totals.VIQN || 0,
-      SUITES: totals.SUITES || 0,
+      KING: safeNumber(totals.KING),
+      VIKG: safeNumber(totals.VIKG),
+      QUEEN: safeNumber(totals.QUEEN ?? totals.QUEENS),
+      VIQN: safeNumber(totals.VIQN),
+      SUITES: safeNumber(totals.SUITES),
     }
     const inventory = inventoryFromRooms(rooms)
     setState((prev) => {
       if (isForTomorrow) return { ...prev, tomorrowInventory: inventory }
       const available = totalAvailableRooms(rooms)
-      const snapshot = { ...prev.dailyInventorySnapshot, rooms, available, occupancy: calculateOccupancy(available), updatedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }
+      const snapshot = sanitizeSnapshot({ ...prev.dailyInventorySnapshot, rooms, available, occupancy: calculateOccupancy(available), updatedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) })
       persistSnapshot(snapshot)
       return applySnapshotToState({ ...prev, todayInventory: inventory }, snapshot)
     })

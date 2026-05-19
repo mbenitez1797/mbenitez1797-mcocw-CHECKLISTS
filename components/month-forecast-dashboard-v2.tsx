@@ -17,7 +17,7 @@ import {
   type ForecastRoomGroup,
 } from "@/lib/month-housekeeping-forecast"
 
-const STORAGE_KEY = "month-housekeeping-forecast-dashboard-v8"
+const STORAGE_KEY = "month-housekeeping-forecast-dashboard-v10"
 const PARSE_ERROR = "Unable to parse housekeeping forecast. Please upload the Month Housekeeping Forecast PDF."
 
 function formatDateLabel(dateISO: string) {
@@ -42,23 +42,43 @@ function chunkWeeks(days: ForecastDay[]) {
 
 function recalculateDay(day: ForecastDay): ForecastDay {
   const groups = { ...day.groups } as ForecastDay["groups"]
+
+  let totalOccupied = 0
+
   FORECAST_ROOM_GROUPS.forEach((group) => {
-    const occupied = Math.max(0, groups[group].arrivals) + Math.max(0, groups[group].stayovers)
-    groups[group] = { ...groups[group], occupied, available: FORECAST_ROOM_TOTALS[group] - occupied }
+    const arrivals = Math.max(0, Number(groups[group]?.arrivals ?? 0))
+    const stayovers = Math.max(0, Number(groups[group]?.stayovers ?? 0))
+    const occupied = arrivals + stayovers
+    const available = FORECAST_ROOM_TOTALS[group] - occupied
+
+    groups[group] = {
+      ...groups[group],
+      inventoryTotal: FORECAST_ROOM_TOTALS[group],
+      arrivals,
+      stayovers,
+      occupied,
+      available,
+    }
+
+    totalOccupied += occupied
   })
-  const totalOccupied = FORECAST_ROOM_GROUPS.reduce((sum, group) => sum + groups[group].occupied, 0)
-  const totalAvailable = FORECAST_ROOM_TOTAL - totalOccupied
+
+  const totalAvailable = FORECAST_ROOM_GROUPS.reduce(
+    (sum, group) => sum + groups[group].available,
+    0
+  )
+
   return {
     ...day,
     groups,
     totalOccupied,
     totalAvailable,
     occupancy: `${((totalOccupied / FORECAST_ROOM_TOTAL) * 100).toFixed(1)}%`,
-    oversold: totalAvailable < 0 || FORECAST_ROOM_GROUPS.some((group) => groups[group].available < 0),
+    oversold:
+      totalAvailable < 0 ||
+      FORECAST_ROOM_GROUPS.some((group) => groups[group].available < 0),
   }
-}
-
-function normalizeResult(result: ForecastParseResult): ForecastParseResult {
+} function normalizeResult(result: ForecastParseResult): ForecastParseResult {
   return { ...result, days: result.days.map(recalculateDay) }
 }
 

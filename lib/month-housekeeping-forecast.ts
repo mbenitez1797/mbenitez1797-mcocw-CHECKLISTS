@@ -654,17 +654,22 @@ export const summarizeForecastDay = (date: Date, groups: Record<ForecastRoomGrou
   let arrivingGuests = 0
   let departingGuests = 0
   let totalOccupied = 0
+  let totalAvailable = 0
 
-  FORECAST_ROOM_GROUPS.forEach(groupKey => {
+  FORECAST_ROOM_GROUPS.forEach((groupKey) => {
     const group = groups[groupKey]
+
+    group.inventoryTotal = FORECAST_ROOM_TOTALS[groupKey]
     group.rows = normalizeForecastRoomRows(groupKey, group.rows)
-    group.arrivals = group.rows.reduce((sum, row) => sum + row.arrivals, 0)
-    group.departures = group.rows.reduce((sum, row) => sum + row.departures, 0)
-    group.stayovers = group.rows.reduce((sum, row) => sum + row.stayovers, 0)
-    group.arrivingGuests = group.rows.reduce((sum, row) => sum + row.arrivingGuests, 0)
-    group.departingGuests = group.rows.reduce((sum, row) => sum + row.departingGuests, 0)
-    group.occupied = group.stayovers + group.arrivals
-    group.available = group.inventoryTotal - group.occupied
+
+    group.arrivals = group.rows.reduce((sum, row) => sum + Math.max(0, Number(row.arrivals ?? 0)), 0)
+    group.departures = group.rows.reduce((sum, row) => sum + Math.max(0, Number(row.departures ?? 0)), 0)
+    group.stayovers = group.rows.reduce((sum, row) => sum + Math.max(0, Number(row.stayovers ?? 0)), 0)
+    group.arrivingGuests = group.rows.reduce((sum, row) => sum + Math.max(0, Number(row.arrivingGuests ?? 0)), 0)
+    group.departingGuests = group.rows.reduce((sum, row) => sum + Math.max(0, Number(row.departingGuests ?? 0)), 0)
+
+    group.occupied = group.arrivals + group.stayovers
+    group.available = FORECAST_ROOM_TOTALS[groupKey] - group.occupied
 
     arrivals += group.arrivals
     departures += group.departures
@@ -672,9 +677,8 @@ export const summarizeForecastDay = (date: Date, groups: Record<ForecastRoomGrou
     arrivingGuests += group.arrivingGuests
     departingGuests += group.departingGuests
     totalOccupied += group.occupied
+    totalAvailable += group.available
   })
-
-  const totalAvailable = FORECAST_ROOM_TOTAL - totalOccupied
 
   return {
     dateISO: isoDate(date),
@@ -689,10 +693,11 @@ export const summarizeForecastDay = (date: Date, groups: Record<ForecastRoomGrou
     totalOccupied,
     totalAvailable,
     occupancy: `${((totalOccupied / FORECAST_ROOM_TOTAL) * 100).toFixed(1)}%`,
-    oversold: totalAvailable < 0 || FORECAST_ROOM_GROUPS.some(group => groups[group].available < 0),
+    oversold:
+      totalAvailable < 0 ||
+      FORECAST_ROOM_GROUPS.some((group) => groups[group].available < 0),
   }
 }
-
 export const buildForecastDaysFromActivityRows = (rows: ForecastAiActivityRow[]) => {
   assertForecastInventoryTotals()
 

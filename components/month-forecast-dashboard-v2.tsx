@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { useInventory } from "@/contexts/inventory-context"
 import type { DailyInventorySnapshot } from "@/lib/daily-inventory"
 import {
+  FORECAST_ROOM_CODE_TOTALS,
   FORECAST_ROOM_GROUPS,
   FORECAST_ROOM_TOTAL,
   FORECAST_ROOM_TOTALS,
@@ -17,7 +18,7 @@ import {
   type ForecastRoomGroup,
 } from "@/lib/month-housekeeping-forecast"
 
-const STORAGE_KEY = "month-housekeeping-forecast-dashboard-v11"
+const STORAGE_KEY = "month-housekeeping-forecast-dashboard-v14"
 const PARSE_ERROR = "Unable to parse housekeeping forecast. Please upload the Month Housekeeping Forecast PDF."
 
 function formatDateLabel(dateISO: string) {
@@ -34,6 +35,10 @@ function chipClass(value: number) {
   return "border-emerald-200 bg-emerald-50 text-emerald-700"
 }
 
+function roomCodeAvailability(roomCode: string, arrivals: number, stayovers: number) {
+  const inventory = (FORECAST_ROOM_CODE_TOTALS as Record<string, number>)[roomCode] ?? 0
+  return inventory - Math.max(0, Number(arrivals ?? 0)) - Math.max(0, Number(stayovers ?? 0))
+}
 function chunkWeeks(days: ForecastDay[]) {
   const weeks: ForecastDay[][] = []
   for (let index = 0; index < days.length; index += 7) weeks.push(days.slice(index, index + 7))
@@ -46,16 +51,35 @@ function recalculateDay(day: ForecastDay): ForecastDay {
   let totalOccupied = 0
 
   FORECAST_ROOM_GROUPS.forEach((group) => {
-    const arrivals = Math.max(0, Number(groups[group]?.arrivals ?? 0))
-    const stayovers = Math.max(0, Number(groups[group]?.stayovers ?? 0))
+    const rows = (groups[group]?.rows || []).map((row) => ({
+      ...row,
+      arrivals: Math.max(0, Number(row.arrivals ?? 0)),
+      departures: Math.max(0, Number(row.departures ?? 0)),
+      stayovers: Math.max(0, Number(row.stayovers ?? 0)),
+      arrivingGuests: Math.max(0, Number(row.arrivingGuests ?? 0)),
+      departingGuests: Math.max(0, Number(row.departingGuests ?? 0)),
+    }))
+
+    const arrivals = rows.reduce((sum, row) => sum + row.arrivals, 0)
+    const departures = rows.reduce((sum, row) => sum + row.departures, 0)
+    const stayovers = rows.reduce((sum, row) => sum + row.stayovers, 0)
+    const arrivingGuests = rows.reduce((sum, row) => sum + row.arrivingGuests, 0)
+    const departingGuests = rows.reduce((sum, row) => sum + row.departingGuests, 0)
+
     const occupied = arrivals + stayovers
-    const available = FORECAST_ROOM_TOTALS[group] - occupied
+    const available = rows.length
+      ? rows.reduce((sum, row) => sum + roomCodeAvailability(row.roomCode, row.arrivals, row.stayovers), 0)
+      : FORECAST_ROOM_TOTALS[group] - occupied
 
     groups[group] = {
       ...groups[group],
       inventoryTotal: FORECAST_ROOM_TOTALS[group],
+      rows,
       arrivals,
+      departures,
       stayovers,
+      arrivingGuests,
+      departingGuests,
       occupied,
       available,
     }
@@ -71,6 +95,11 @@ function recalculateDay(day: ForecastDay): ForecastDay {
   return {
     ...day,
     groups,
+    arrivals: FORECAST_ROOM_GROUPS.reduce((sum, group) => sum + groups[group].arrivals, 0),
+    departures: FORECAST_ROOM_GROUPS.reduce((sum, group) => sum + groups[group].departures, 0),
+    stayovers: FORECAST_ROOM_GROUPS.reduce((sum, group) => sum + groups[group].stayovers, 0),
+    arrivingGuests: FORECAST_ROOM_GROUPS.reduce((sum, group) => sum + groups[group].arrivingGuests, 0),
+    departingGuests: FORECAST_ROOM_GROUPS.reduce((sum, group) => sum + groups[group].departingGuests, 0),
     totalOccupied,
     totalAvailable,
     occupancy: `${((totalOccupied / FORECAST_ROOM_TOTAL) * 100).toFixed(1)}%`,

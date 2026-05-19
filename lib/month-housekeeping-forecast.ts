@@ -69,25 +69,25 @@ export const FORECAST_ROOM_TOTALS: Record<ForecastRoomGroup, number> = {
 export const FORECAST_ROOM_GROUPS: ForecastRoomGroup[] = ["KING", "QNQN", "VIQN", "VIKG", "SUIT"]
 
 export const FORECAST_ROOM_CODES: Record<ForecastRoomGroup, string[]> = {
-  KING: ["RM1K0006", "RM1KA0008", "RM1KA0009"],
+  KING: ["RM1K0006", "RM1KA008", "RM1KA009"],
   QNQN: ["RM2Q0001"],
-  VIQN: ["RM2Q0002", "RM2QA0003", "RM2QA0004", "RM2QA0005"],
+  VIQN: ["RM2Q0002", "RM2QA003", "RM2QA004", "RM2QA005"],
   VIKG: ["RM1K0007"],
-  SUIT: ["SU1B0010", "SU1BA0011"],
+  SUIT: ["SU1B0010", "SU1BA011"],
 }
 
 export const FORECAST_ROOM_CODE_TOTALS: Record<string, number> = {
   RM1K0006: 30,
-  RM1KA0008: 8,
-  RM1KA0009: 1,
+  RM1KA008: 8,
+  RM1KA009: 1,
   RM2Q0001: 16,
   RM2Q0002: 41,
-  RM2QA0003: 3,
-  RM2QA0004: 4,
-  RM2QA0005: 1,
+  RM2QA003: 3,
+  RM2QA004: 4,
+  RM2QA005: 1,
   RM1K0007: 3,
   SU1B0010: 3,
-  SU1BA0011: 1,
+  SU1BA011: 1,
 }
 
 export const FORECAST_ROOM_TYPE_MAPPINGS: Array<Pick<ForecastRoomActivity, "group" | "roomCode" | "roomLabel">> = [
@@ -103,17 +103,17 @@ export const FORECAST_ROOM_TYPE_MAPPINGS: Array<Pick<ForecastRoomActivity, "grou
   },
   {
     group: "KING",
-    roomCode: "RM1KA0008",
+    roomCode: "RM1KA008",
     roomLabel: "Deluxe Room, 1 King Bed, Sofa bed, Hearing Accessible",
   },
   {
     group: "VIQN",
-    roomCode: "RM2QA0003",
+    roomCode: "RM2QA003",
     roomLabel: "Deluxe Room, 2 Queen Beds, Water View, Hearing Accessible",
   },
   {
     group: "VIQN",
-    roomCode: "RM2QA0004",
+    roomCode: "RM2QA004",
     roomLabel: "Deluxe Room, 2 Queen Beds, Water View, Mobility Accessible with Bathtub",
   },
   {
@@ -128,7 +128,7 @@ export const FORECAST_ROOM_TYPE_MAPPINGS: Array<Pick<ForecastRoomActivity, "grou
   },
   {
     group: "KING",
-    roomCode: "RM1KA0009",
+    roomCode: "RM1KA009",
     roomLabel: "Deluxe Room, 1 King Bed, Sofa bed, Mobility Accessible with Roll-In Shower",
   },
   {
@@ -138,12 +138,12 @@ export const FORECAST_ROOM_TYPE_MAPPINGS: Array<Pick<ForecastRoomActivity, "grou
   },
   {
     group: "VIQN",
-    roomCode: "RM2QA0005",
+    roomCode: "RM2QA005",
     roomLabel: "Deluxe Room, 2 Queen Beds, Water View, Mobility Accessible with Roll-In Shower",
   },
   {
     group: "SUIT",
-    roomCode: "SU1BA0011",
+    roomCode: "SU1BA011",
     roomLabel: "1 Bedroom Suite, 1 King Bed, Sitting Area, Sofa bed, Hearing Accessible, Mobility Accessible",
   },
 ]
@@ -154,19 +154,19 @@ const ROOM_CODE_ALIASES: Record<string, ForecastRoomGroup> = {
   RM1K0006: "KING",
   RM1KA008: "KING",
   RM1KA009: "KING",
-  RM1KA0008: "KING",
-  RM1KA0009: "KING",
+  RM1KA008: "KING",
+  RM1KA009: "KING",
   RM2Q0001: "QNQN",
   RM2Q0002: "VIQN",
   RM2QA003: "VIQN",
   RM2QA004: "VIQN",
   RM2QA005: "VIQN",
-  RM2QA0003: "VIQN",
-  RM2QA0004: "VIQN",
-  RM2QA0005: "VIQN",
+  RM2QA003: "VIQN",
+  RM2QA004: "VIQN",
+  RM2QA005: "VIQN",
   RM1K0007: "VIKG",
   SU1B0010: "SUIT",
-  SU1BA0011: "SUIT",
+  SU1BA011: "SUIT",
   SU1BA011: "SUIT",
 }
 
@@ -201,7 +201,7 @@ const tryMapForecastRoomType = (description: string): ForecastRoomGroup | null =
   if (isWaterView && /\bbeds?\b/.test(text) && !hasSofaBed) return "VIQN"
   if (hasSofaBed && isWaterView) return "VIKG"
   if (hasSofaBed) return "KING"
-  if (/\b(?:deluxe|dewxe|douxe|doxe|dowxe|soluxe)\s+room\b/.test(text) && !isWaterView) return "QNQN"
+  if (/\b(?:deluxe|dee|dewxe|douxe|doxe|dowxe|soluxe)\s+room\b/.test(text) && !isWaterView) return "QNQN"
 
   return null
 }
@@ -220,11 +220,11 @@ const canonicalRoomCodeForGroup = (group: ForecastRoomGroup, value?: string) => 
   if (!normalized) return codes[0]
 
   const alias = normalized
-    .replace("RM1KA008", "RM1KA0008")
-    .replace("RM1KA009", "RM1KA0009")
-    .replace("RM2QA003", "RM2QA0003")
-    .replace("RM2QA004", "RM2QA0004")
-    .replace("RM2QA005", "RM2QA0005")
+    .replace("RM1KA008", "RM1KA008")
+    .replace("RM1KA009", "RM1KA009")
+    .replace("RM2QA003", "RM2QA003")
+    .replace("RM2QA004", "RM2QA004")
+    .replace("RM2QA005", "RM2QA005")
 
   const exact = codes.find(code => code === alias)
   if (exact) return exact
@@ -243,20 +243,20 @@ const roomCodeForDescription = (group: ForecastRoomGroup, description: string) =
   const text = normalizeForecastRoomDescription(description)
 
   if (group === "KING") {
-    if (text.includes("mobility accessible") || text.includes("roll in")) return "RM1KA0009"
-    if (text.includes("hearing accessible")) return "RM1KA0008"
+    if (text.includes("mobility accessible") || text.includes("roll in")) return "RM1KA009"
+    if (text.includes("hearing accessible")) return "RM1KA008"
     return "RM1K0006"
   }
 
   if (group === "VIQN") {
-    if (text.includes("roll in")) return "RM2QA0005"
-    if (text.includes("bathtub")) return "RM2QA0004"
-    if (text.includes("hearing accessible")) return "RM2QA0003"
+    if (text.includes("roll in")) return "RM2QA005"
+    if (text.includes("bathtub")) return "RM2QA004"
+    if (text.includes("hearing accessible")) return "RM2QA003"
     return "RM2Q0002"
   }
 
   if (group === "SUIT") {
-    if (text.includes("hearing accessible") || text.includes("mobility accessible")) return "SU1BA0011"
+    if (text.includes("hearing accessible") || text.includes("mobility accessible")) return "SU1BA011"
     return "SU1B0010"
   }
 
@@ -503,7 +503,7 @@ const OCR_ROW_START_PATTERN =
 
 const OCR_NOISE_PATTERN = /https?:|tenant|property|housekeeping forecasting|room type|arrivals|departures|stay overs|start date|end date|printed/i
 
-const OCR_ROOM_START_FRAGMENT = /\b(?:deluxe|dewxe|douxe|doxe|dowxe|soluxe)\s+room\b|\b1\s*bedroom\b|\bsuite\b/i
+const OCR_ROOM_START_FRAGMENT = /\b(?:deluxe|dee|dewxe|douxe|doxe|dowxe|soluxe)\s+room\b|\b1\s*bedroom\b|\bsuite\b/i
 
 const OCR_MONTH_ONLY_PATTERN =
   /^(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?$/i
@@ -669,7 +669,14 @@ export const summarizeForecastDay = (date: Date, groups: Record<ForecastRoomGrou
     group.departingGuests = group.rows.reduce((sum, row) => sum + Math.max(0, Number(row.departingGuests ?? 0)), 0)
 
     group.occupied = group.arrivals + group.stayovers
-    group.available = FORECAST_ROOM_TOTALS[groupKey] - group.occupied
+    group.available = group.rows.reduce(
+      (sum, row) =>
+        sum +
+        ((FORECAST_ROOM_CODE_TOTALS as Record<string, number>)[row.roomCode] ?? 0) -
+        row.arrivals -
+        row.stayovers,
+      0
+    )
 
     arrivals += group.arrivals
     departures += group.departures
@@ -782,8 +789,249 @@ const activityFromLine = (line: string, order: Array<keyof ForecastRoomActivity>
   return row
 }
 
+
+const FORECAST_METRIC_LINE_NOISE_PATTERN = /https?:|tenant|property|housekeeping forecasting|room\\s*types?|roomtype|arrivals|departures|stay\\s+over|start date|end date|printed|room types available|bedded rooms available/i
+const FORECAST_MONTH_WORD_PATTERN = /\\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\\.?\\b/i
+const FORECAST_ROW_ROOM_START_PATTERN = /\\b(?:deluxe|dee|dewxe|douxe|doxe|dowxe|soluxe)\\s+room\\b|\\b1\\s*bedroom\\b|\\bsuite\\b/i
+
+const cleanForecastOcrLine = (line: string) =>
+  normalize(
+    String(line || "")
+      .replace(/[\\\\|]/g, " ")
+      .replace(/[“”]/g, '"')
+      .replace(/[‘’]/g, "'")
+      .replace(/\\b0o+\\b|\\boo+\\b|\\bOo\\b|\\bO\\b/g, "0")
+      .replace(/[)]/g, " 0 ")
+      .replace(/[(]/g, " ")
+  )
+
+const protectForecastRoomCounts = (line: string) =>
+  line
+    .replace(/\\b1\\s*Bedroom\\b/gi, "ONE_BEDROOM")
+    .replace(/\\b1\\s*King\\b/gi, "ONE_KING")
+    .replace(/\\b2\\s*Queen\\b/gi, "TWO_QUEEN")
+    .replace(/\\b2Queen\\b/gi, "TWO_QUEEN")
+
+const unprotectForecastRoomCounts = (line: string) =>
+  line
+    .replace(/ONE_BEDROOM/g, "1 Bedroom")
+    .replace(/ONE_KING/g, "1 King")
+    .replace(/TWO_QUEEN/g, "2 Queen")
+
+const removeForecastDatePrefix = (line: string) =>
+  line.replace(/^\\s*(?:[A-Za-z]+\\s+)?\\d{1,2}[A-Za-z]?\\s*,?\\s*/, " ")
+
+const metricValuesFromForecastLine = (line: string) => {
+  const raw = cleanForecastOcrLine(line)
+  if (FORECAST_METRIC_LINE_NOISE_PATTERN.test(raw)) return null
+
+  let metricText = protectForecastRoomCounts(raw)
+  metricText = removeForecastDatePrefix(metricText)
+  metricText = metricText
+    .replace(FORECAST_MONTH_WORD_PATTERN, " ")
+    .replace(/\\b20\\d{2}\\b/g, " ")
+
+  const numbers = (metricText.match(/-?\\d+(?:\\.\\d+)?/g) || []).map(parseNumber)
+  if (numbers.length < 5) return null
+
+  const values = numbers.length > 9 ? numbers.slice(numbers.length - 9) : numbers
+
+  if (
+    (values[0] ?? 0) > FORECAST_ROOM_TOTAL ||
+    (values[2] ?? 0) > FORECAST_ROOM_TOTAL ||
+    (values[4] ?? 0) > FORECAST_ROOM_TOTAL
+  ) {
+    return null
+  }
+
+  return {
+    arrivals: values[0] ?? 0,
+    arrivingGuests: values[1] ?? 0,
+    departures: values[2] ?? 0,
+    departingGuests: values[3] ?? 0,
+    stayovers: values[4] ?? 0,
+    stayoverGuests: values[5] ?? 0,
+  }
+}
+
+const cleanForecastDescriptionLine = (line: string) => {
+  let value = cleanForecastOcrLine(line)
+  if (FORECAST_METRIC_LINE_NOISE_PATTERN.test(value)) return ""
+
+  value = protectForecastRoomCounts(value)
+  value = removeForecastDatePrefix(value)
+  value = value
+    .replace(FORECAST_MONTH_WORD_PATTERN, " ")
+    .replace(/\\b20\\d{2}\\b/g, " ")
+
+  const metricRun = value.search(/(?:^|\\s)-?\\d+(?:\\.\\d+)?(?:\\s+-?\\d+(?:\\.\\d+)?){4,}/)
+  if (metricRun >= 0) value = value.slice(0, metricRun)
+
+  value = unprotectForecastRoomCounts(value)
+
+  return normalize(
+    value
+      .replace(/[~=_]+/g, " ")
+      .replace(/[^A-Za-z0-9,\\s-]/g, " ")
+  )
+}
+
+const findLastForecastIndex = (values: string[], predicate: (line: string) => boolean) => {
+  for (let index = values.length - 1; index >= 0; index -= 1) {
+    if (predicate(values[index])) return index
+  }
+  return -1
+}
+
+const dateFromForecastBlock = (block: string[], lastDate: Date | null) => {
+  const text = cleanForecastOcrLine(block.join(" "))
+
+  const monthMatch = text.match(FORECAST_MONTH_WORD_PATTERN)
+  const month = monthMatch ? monthIndex(monthMatch[1]) : lastDate ? lastDate.getMonth() : null
+
+  const yearMatch = text.match(/\\b20\\d{2}\\b/)
+  const year = yearMatch
+    ? parseNumber(yearMatch[0])
+    : lastDate
+      ? lastDate.getFullYear()
+      : new Date().getFullYear()
+
+  const dayMatch = text.match(/(?:^|\\s)(\\d{1,2})\\s*,/)
+  const day = dayMatch ? parseNumber(dayMatch[1]) : lastDate ? lastDate.getDate() : 0
+
+  if (month === null || !day) return lastDate
+
+  const date = new Date(year, month, day)
+  return Number.isNaN(date.getTime()) ? lastDate : date
+}
+
+const parseForecastRowsByMetricBlocks = (rawText: string): ForecastDay[] => {
+  const lines = rawText
+    .replace(/\\r/g, "\\n")
+    .split(/\\n/)
+    .map(cleanForecastOcrLine)
+    .filter(Boolean)
+
+  const metricRows: Array<{
+    index: number
+    metrics: {
+      arrivals: number
+      arrivingGuests: number
+      departures: number
+      departingGuests: number
+      stayovers: number
+      stayoverGuests: number
+    }
+  }> = []
+
+  lines.forEach((line, index) => {
+    const metrics = metricValuesFromForecastLine(line)
+    if (metrics) metricRows.push({ index, metrics })
+  })
+
+  if (!metricRows.length) return []
+
+  const daysByISO = new Map<string, { date: Date; groups: Record<ForecastRoomGroup, ForecastGroupSummary> }>()
+  let lastDate: Date | null = null
+
+  metricRows.forEach((metricRow, rowIndex) => {
+    const previousMetricIndex = metricRows[rowIndex - 1]?.index ?? -1
+    const nextMetricIndex = metricRows[rowIndex + 1]?.index ?? lines.length
+
+    const previousWindow = lines.slice(
+      Math.max(previousMetricIndex + 1, metricRow.index - 8, 0),
+      metricRow.index
+    )
+
+    const monthPosition = findLastForecastIndex(previousWindow, line => FORECAST_MONTH_WORD_PATTERN.test(line))
+    const roomPosition = findLastForecastIndex(previousWindow, line => FORECAST_ROW_ROOM_START_PATTERN.test(line))
+
+    let start = previousWindow.length
+
+    if (monthPosition >= 0) {
+      start = monthPosition
+
+      for (let index = monthPosition - 1; index >= 0; index -= 1) {
+        if (FORECAST_ROW_ROOM_START_PATTERN.test(previousWindow[index])) start = index
+        else if (index < monthPosition - 3) break
+      }
+    } else if (roomPosition >= 0) {
+      start = roomPosition
+    } else {
+      start = Math.max(0, previousWindow.length - 2)
+    }
+
+    const before = previousWindow.slice(start)
+    const after: string[] = []
+
+    for (let cursor = metricRow.index + 1; cursor < Math.min(nextMetricIndex, metricRow.index + 8); cursor += 1) {
+      const line = lines[cursor]
+      if (!line) continue
+      if (/https?:|tenant|property|printed/i.test(line)) break
+      if (FORECAST_MONTH_WORD_PATTERN.test(line)) break
+      if (FORECAST_ROW_ROOM_START_PATTERN.test(line)) break
+      after.push(line)
+    }
+
+    const block = [...before, lines[metricRow.index], ...after]
+    const date = dateFromForecastBlock(block, lastDate)
+    if (!date) return
+
+    lastDate = date
+
+    const roomDescription = normalize(
+      block
+        .map(cleanForecastDescriptionLine)
+        .filter(Boolean)
+        .join(" ")
+    )
+
+    if (!roomDescription || /\\bTOTAL\\b/i.test(roomDescription)) return
+
+    let group = tryMapForecastRoomType(roomDescription)
+
+    if (!group && /\\b(?:deluxe|dee|dewxe|douxe|doxe|dowxe|soluxe)\\s+room\\b/i.test(roomDescription)) {
+      group = "QNQN"
+    }
+
+    if (!group) return
+
+    const key = isoDate(date)
+
+    if (!daysByISO.has(key)) {
+      daysByISO.set(key, { date, groups: createEmptyForecastGroups() })
+    }
+
+    const day = daysByISO.get(key)
+    if (!day) return
+
+    const roomCode = roomCodeForDescription(group, roomDescription)
+
+    day.groups[group].rows.push({
+      roomCode,
+      roomLabel: roomDescription,
+      group,
+      arrivals: metricRow.metrics.arrivals,
+      departures: metricRow.metrics.departures,
+      stayovers: metricRow.metrics.stayovers,
+      arrivingGuests: metricRow.metrics.arrivingGuests,
+      departingGuests: metricRow.metrics.departingGuests,
+    })
+  })
+
+  return Array.from(daysByISO.values())
+    .map(({ date, groups }) => summarizeForecastDay(date, groups))
+    .filter(day => day.arrivals > 0 || day.departures > 0 || day.stayovers > 0)
+    .sort((a, b) => a.dateISO.localeCompare(b.dateISO))
+}
+
 export function parseMonthHousekeepingForecastText(rawText: string): ForecastParseResult {
   assertForecastInventoryTotals()
+
+  const blockDays = parseForecastRowsByMetricBlocks(rawText)
+  if (blockDays.length >= 7) {
+    return { days: blockDays, sourceText: rawText }
+  }
 
   if (/housekeeping forecasting|stay rooms|room type/i.test(rawText)) {
     const ocrDays = parseOcrForecastRows(rawText)

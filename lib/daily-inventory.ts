@@ -28,11 +28,11 @@ export type DailyInventorySnapshot = {
 export const DAILY_INVENTORY_STORAGE_KEY = "daily-inventory-snapshot"
 
 export const ROOM_TYPE_MAP: Record<keyof RoomBucket, string[]> = {
-  KING: ["RM1K0006", "RM1KA0008", "RM1KA0009"],
+  KING: ["RM1K0006", "RM1KA008", "RM1KA009"],
   VIKG: ["RM1K0007"],
   QUEEN: ["RM2Q0001"],
   VIQN: ["RM2Q0002", "RM2QA003", "RM2QA004", "RM2QA005"],
-  SUITES: ["SU1B0010", "SU1BA0011"],
+  SUITES: ["SU1B0010", "SU1BA011"],
 }
 
 export const emptyRooms = (): RoomBucket => ({
@@ -187,3 +187,4 @@ export function buildDailySnapshot(gaCsv: string, roomCsv: string): DailyInvento
     updatedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
   }
 }
+

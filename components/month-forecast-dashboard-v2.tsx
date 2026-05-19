@@ -17,7 +17,7 @@ import {
   type ForecastRoomGroup,
 } from "@/lib/month-housekeeping-forecast"
 
-const STORAGE_KEY = "month-housekeeping-forecast-dashboard-v10"
+const STORAGE_KEY = "month-housekeeping-forecast-dashboard-v11"
 const PARSE_ERROR = "Unable to parse housekeeping forecast. Please upload the Month Housekeeping Forecast PDF."
 
 function formatDateLabel(dateISO: string) {
@@ -297,3 +297,4 @@ export function MonthForecastDashboardV2({ compact = false, onForecastApplied }:
     </div>
   )
 }
+

@@ -22,7 +22,7 @@ import {
 import { FileSpreadsheet, Printer, Trash2, MoreVertical, Loader2, Check, ExternalLink } from "lucide-react"
 
 interface ChecklistActionsProps {
-  checklistType: 'am' | 'pm' | 'night' | 'admin' | 'agm' | 'gm' | 'sales' | 'housekeeping' | 'engineering'
+  checklistType: 'am' | 'pm' | 'night' | 'admin' | 'agm' | 'gm'
   associateName: string
   date: string
   shiftStartTime?: string
@@ -71,9 +71,6 @@ export function ChecklistActions({
     admin: 'Admin',
     agm: 'AGM',
     gm: 'GM',
-    sales: 'Sales',
-    housekeeping: 'Housekeeping',
-    engineering: 'Engineering',
   }
 
   const handleExportToSheets = async () => {

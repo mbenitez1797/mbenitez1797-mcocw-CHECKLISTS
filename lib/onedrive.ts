@@ -10,9 +10,6 @@ const checklistFolderNames: Record<ChecklistType, string> = {
   admin: 'Admin Checklists',
   agm: 'AGM Checklists',
   gm: 'GM Checklists',
-  sales: 'Sales Checklists',
-  housekeeping: 'Housekeeping Checklists',
-  engineering: 'Engineering Checklists',
 }
 
 function getGraphClient(): Client | null {

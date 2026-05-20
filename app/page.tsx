@@ -1,4 +1,3 @@
-import { SmartInventorySummary } from "@/components/smart-inventory-summary"
 import Link from "next/link"
 import { Sun, Sunset, Moon, ClipboardList, UserCog, Crown, Target, Sparkles, Wrench } from "lucide-react"
 
@@ -110,10 +109,6 @@ export default function Page() {
           </div>
         </header>
 
-        <section className="mb-8">
-          <SmartInventorySummary />
-        </section>
-
         {/* Front Desk Shifts */}
         <section className="mb-12">
           <h2 className="text-xl font-semibold text-foreground mb-4">Front Desk Shifts</h2>
@@ -198,9 +193,6 @@ export default function Page() {
     </main>
   )
 }
-
-
-
 
 
 

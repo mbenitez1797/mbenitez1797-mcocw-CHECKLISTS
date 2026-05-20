@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
@@ -99,7 +99,6 @@ const defaultValues: AMFormData = {
 }
 
 export function AMChecklistForm() {
-  const [shuffleRecommendations, setShuffleRecommendations] = useState<any[]>([]); useEffect(() => { try { setShuffleRecommendations(JSON.parse(localStorage.getItem("shuffle-recommendations") || "[]")) } catch { setShuffleRecommendations([]) } }, []);
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [saveMessage, setSaveMessage] = useState("")
@@ -273,7 +272,6 @@ export function AMChecklistForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
       {/* Header with Save and Home buttons */}
       <div className="flex items-center justify-between">
         <Button variant="outline" size="sm" asChild>
@@ -311,14 +309,12 @@ export function AMChecklistForm() {
         totalSteps={STEP_LABELS.length}
         stepLabels={STEP_LABELS}
       />
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
 
       {/* Step 0: Shift Info */}
       {currentStep === 0 && (
         <div className="flex flex-col gap-6">
           <QuickReferenceCard />
           <FormSection title="Associate Information">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="associateName">Associate Name *</Label>
@@ -369,7 +365,6 @@ export function AMChecklistForm() {
           </FormSection>
 
           <FormSection title="Bank Count - Start of Shift">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="startBankCount">Starting Bank Count ($) *</Label>
@@ -414,7 +409,6 @@ export function AMChecklistForm() {
           </FormSection>
 
           <FormSection title="Room Inventory at Start of AM Shift">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="currentOccupancy">Current Occupancy %</Label>
@@ -498,7 +492,6 @@ export function AMChecklistForm() {
           </div>
 
           <FormSection title="Section 1: Opening Stay PMS Review">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Opening Stay PMS Review Tasks"
               options={openingStayPMSReviewOptions}
@@ -508,7 +501,6 @@ export function AMChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 2: Overnight Follow-Up">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Overnight Follow-Up Tasks"
               options={overnightFollowUpOptions}
@@ -546,7 +538,6 @@ export function AMChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 3: Departure Review">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Departure Review Tasks"
               options={departureReviewOptions}
@@ -565,7 +556,6 @@ export function AMChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 4: Open Balance / Ledger Review">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Open Balance / Ledger Review Tasks"
               options={openBalanceLedgerReviewOptions}
@@ -613,7 +603,6 @@ export function AMChecklistForm() {
           </div>
 
           <FormSection title="Section 5: Housekeeping Alignment">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Housekeeping Alignment Tasks"
               options={housekeepingAlignmentOptions}
@@ -635,7 +624,6 @@ export function AMChecklistForm() {
             title="Section 6: Arrival Review"
             description="Do Not Pre-Assign Standard Arrivals"
           >
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Arrival Review Tasks"
               options={arrivalReviewOptions}
@@ -648,7 +636,6 @@ export function AMChecklistForm() {
             title="Section 7: Room Assignment Strategy"
             description="Room Assignment Rule: Do not pre-assign all arrivals. Standard arrivals should remain unassigned so the desk has flexibility based on who arrives first."
           >
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Room Assignment Strategy Tasks"
               options={amRoomAssignmentStrategyOptions}
@@ -695,7 +682,6 @@ export function AMChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 8: Payment, Billing, and Profile Readiness">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Payment, Billing, and Profile Readiness Tasks"
               options={paymentBillingProfileReadinessOptions}
@@ -733,7 +719,6 @@ export function AMChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 9: Groups and Events Review">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Groups and Events Review Tasks"
               options={groupsEventsReviewOptions}
@@ -785,7 +770,6 @@ export function AMChecklistForm() {
           </div>
 
           <FormSection title="Section 10: Final Room Inventory Check">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Final Room Inventory Check Tasks"
               options={finalRoomInventoryCheckOptions}
@@ -823,7 +807,6 @@ export function AMChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 11: Guest Follow-Up Check">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Guest Follow-Up Check Tasks"
               options={guestFollowUpCheckOptions}
@@ -865,7 +848,6 @@ export function AMChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 12: PM Shift Handoff">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="PM Shift Handoff Tasks"
               options={pmShiftHandoffOptions}
@@ -894,7 +876,6 @@ export function AMChecklistForm() {
           />
 
           <FormSection title="Bank Count - End of Shift">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="endBankCount">Ending Bank Count ($) *</Label>
@@ -939,7 +920,6 @@ export function AMChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 13: Final AM Confirmation">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Final Confirmation"
               options={amFinalConfirmationOptions}
@@ -1001,7 +981,6 @@ export function AMChecklistForm() {
     </form>
   )
 }
-
 
 
 

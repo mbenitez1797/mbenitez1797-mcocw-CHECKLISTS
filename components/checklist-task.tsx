@@ -72,13 +72,6 @@ export function ChecklistTask({
           : "bg-card border-border hover:border-primary/30"
       )}
     >
-      <input
-        type="hidden"
-        name={id}
-        value={checked ? "true" : "false"}
-        data-checklist-task-hidden="true"
-        data-checklist-task-label={label}
-      />
       <div className="flex items-start gap-3">
         <Checkbox
           id={id}
@@ -177,3 +170,6 @@ export function ChecklistSection({
     </div>
   )
 }
+
+
+

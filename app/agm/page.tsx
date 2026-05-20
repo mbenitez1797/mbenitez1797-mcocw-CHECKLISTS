@@ -1,5 +1,4 @@
 import { StreamlinedAGMForm } from "@/components/streamlined-agm-form"
-import { SmartInventorySummary } from "@/components/smart-inventory-summary"
 
 export const metadata = {
   title: "AGM Checklist | Front Desk Checklists",
@@ -7,12 +6,7 @@ export const metadata = {
 }
 
 export default function AGMPage() {
-  return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
-      <SmartInventorySummary />
-      <StreamlinedAGMForm />
-    </div>
-  )
+  return <StreamlinedAGMForm />
 }
 
 

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { Lock, Unlock, AlertTriangle, CheckCircle2, Monitor, Info } from "lucide-react"
+import { SmartUpload } from "@/components/smart-upload"
 
 interface GatekeeperInventoryProps {
   shift: ShiftType
@@ -172,6 +173,9 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
           </div>
         </div>
 
+        {/* Smart Upload Section for Tomorrow */}
+        <SmartUpload isForTomorrow={true} />
+
         {/* Manual Input Section */}
         <div className="bg-indigo-100 border border-indigo-200 rounded-lg p-3 mb-4 flex items-start gap-2">
           <Monitor className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
@@ -271,6 +275,9 @@ export function GatekeeperInventory({ shift, onUnlock }: GatekeeperInventoryProp
           </p>
         </div>
       </div>
+
+      {/* Smart Upload Section */}
+      <SmartUpload isForTomorrow={false} />
 
       {/* Manual Input Section */}
       <div className="bg-white border border-amber-200 rounded-lg p-3 mb-4 flex items-start gap-2">

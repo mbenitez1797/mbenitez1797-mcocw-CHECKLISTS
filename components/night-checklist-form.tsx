@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
@@ -91,7 +91,6 @@ const defaultValues: NightFormData = {
 }
 
 export function NightChecklistForm() {
-  const [shuffleRecommendations, setShuffleRecommendations] = useState<any[]>([]); useEffect(() => { try { setShuffleRecommendations(JSON.parse(localStorage.getItem("shuffle-recommendations") || "[]")) } catch { setShuffleRecommendations([]) } }, []);
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [saveMessage, setSaveMessage] = useState("")
@@ -257,7 +256,6 @@ export function NightChecklistForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
       {/* Header with Save and Home buttons */}
       <div className="flex items-center justify-between">
         <Button variant="outline" size="sm" asChild>
@@ -295,14 +293,12 @@ export function NightChecklistForm() {
         totalSteps={STEP_LABELS.length}
         stepLabels={STEP_LABELS}
       />
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
 
       {/* Step 0: Shift Info */}
       {currentStep === 0 && (
         <div className="flex flex-col gap-6">
           <QuickReferenceCard />
           <FormSection title="Associate Information">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="associateName">Associate Name *</Label>
@@ -353,7 +349,6 @@ export function NightChecklistForm() {
           </FormSection>
 
           <FormSection title="Bank Count - Start of Shift">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="startBankCount">Starting Bank Count ($) *</Label>
@@ -398,7 +393,6 @@ export function NightChecklistForm() {
           </FormSection>
 
           <FormSection title="Room Inventory at Start of Night Shift">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="currentOccupancy">Current Occupancy %</Label>
@@ -488,7 +482,6 @@ export function NightChecklistForm() {
           </FormSection>
 
           <FormSection title="Night Audit Status">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <div className="flex flex-col gap-2">
               <Label>Was Night Audit Completed Successfully? *</Label>
               <RadioGroup
@@ -530,7 +523,6 @@ export function NightChecklistForm() {
           </div>
 
           <FormSection title="Section 1: Night Shift Opening Review">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Night Shift Opening Review Tasks"
               options={nightShiftOpeningReviewOptions}
@@ -540,7 +532,6 @@ export function NightChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 2: Late Arrival Review">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Late Arrival Review Tasks"
               options={lateArrivalReviewOptions}
@@ -553,7 +544,6 @@ export function NightChecklistForm() {
             title="Section 3: Overnight Room Assignment Strategy"
             description="Room Assignment Rule: Do not pre-assign all remaining arrivals. Standard late arrivals should remain unassigned unless there is a true operational reason."
           >
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Overnight Room Assignment Strategy Tasks"
               options={overnightRoomAssignmentStrategyOptions}
@@ -610,7 +600,6 @@ export function NightChecklistForm() {
           </div>
 
           <FormSection title="Section 4: Payment and Authorization Review">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Payment and Authorization Review Tasks"
               helpText="For credit card authorization: use the attached Lane or SRED device. Do not manually enter an authorization."
@@ -621,7 +610,6 @@ export function NightChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 5: Folio and Balance Review">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Folio and Balance Review Tasks"
               options={folioBalanceReviewOptions}
@@ -659,7 +647,6 @@ export function NightChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 6: No-Show / Cancellation Review">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="No-Show / Cancellation Review Tasks"
               options={noShowCancellationReviewOptions}
@@ -707,7 +694,6 @@ export function NightChecklistForm() {
           </div>
 
           <FormSection title="Section 7: Pre-Audit Readiness">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Pre-Audit Readiness Tasks"
               options={preAuditReadinessOptions}
@@ -717,7 +703,6 @@ export function NightChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 8: Night Audit Completion">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Night Audit Completion Tasks"
               options={nightAuditCompletionOptions}
@@ -727,7 +712,6 @@ export function NightChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 9: Required Report Review">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Required Report Review Tasks"
               options={requiredReportReviewOptions}
@@ -742,7 +726,6 @@ export function NightChecklistForm() {
           </div>
 
           <FormSection title="Section 10: Morning Arrival and Departure Prep">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Morning Arrival and Departure Prep Tasks"
               options={morningArrivalDeparturePrepOptions}
@@ -752,7 +735,6 @@ export function NightChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 11: AM Housekeeping Prep">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="AM Housekeeping Prep Tasks"
               options={amHousekeepingPrepOptions}
@@ -762,7 +744,6 @@ export function NightChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 12: AM Shift Handoff">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="amShiftHandoffNotes">AM Shift Handoff Notes:</Label>
               <Textarea
@@ -785,7 +766,6 @@ export function NightChecklistForm() {
           />
 
           <FormSection title="Bank Count - End of Shift">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="endBankCount">Ending Bank Count ($) *</Label>
@@ -830,7 +810,6 @@ export function NightChecklistForm() {
           </FormSection>
 
           <FormSection title="Section 13: Final Night Audit Confirmation">
-<div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Shuffle Recommendation:</strong> {shuffleRecommendations.length ? shuffleRecommendations.map((r:any)=>r.title || r.message || JSON.stringify(r)).join("; ") : "No shuffle needed based on uploaded inventory."}</div>
             <CheckboxGroup
               label="Final Confirmation"
               options={nightFinalConfirmationOptions}
@@ -872,7 +851,6 @@ export function NightChecklistForm() {
     </form>
   )
 }
-
 
 
 

@@ -14,7 +14,6 @@ import { ChecklistActions } from "@/components/checklist-actions"
 import { useChecklistSubmit } from "@/hooks/use-checklist-submit"
 import { ChevronLeft, ChevronRight, CheckCircle2, Send, Save, Home, Loader2, AlertCircle, Monitor, MessageSquare, CreditCard, FileText, Building2, Wrench } from "lucide-react"
 import { gmStreamlinedSchema, type GMStreamlinedFormData, STREAMLINED_STEPS, gmTasks } from "@/lib/streamlined-schemas"
-import { HouseBalancerSection } from "@/components/house-balancer-section"
 
 const STORAGE_KEY = "gm-streamlined-checklist-draft"
 
@@ -119,7 +118,6 @@ export function StreamlinedGMForm() {
         <>
           <QuickReferenceCard />
           <ChecklistSection title="Snapshot" description="Daily business overview">
-            <HouseBalancerSection />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-card border border-border rounded-lg">
               <div><Label htmlFor="associateName">GM Name *</Label><Controller name="associateName" control={control} render={({ field }) => <Input id="associateName" {...field} placeholder="Your name" className="mt-1" />} /></div>
               <div><Label htmlFor="date">Date *</Label><Controller name="date" control={control} render={({ field }) => <Input id="date" type="date" {...field} className="mt-1" />} /></div>

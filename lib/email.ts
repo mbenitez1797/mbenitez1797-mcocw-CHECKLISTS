@@ -1,12 +1,8 @@
 import { Resend } from 'resend'
 
-function getResendClient() {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) return null
-  return new Resend(apiKey)
-}
+const resend = new Resend(process.env.RESEND_API_KEY)
 
-export type ChecklistType = 'am' | 'pm' | 'night' | 'admin' | 'agm' | 'gm' | 'sales' | 'housekeeping' | 'engineering'
+export type ChecklistType = 'am' | 'pm' | 'night' | 'admin' | 'agm' | 'gm'
 
 const checklistNames: Record<ChecklistType, string> = {
   am: 'AM Front Desk Daily Checklist',
@@ -15,9 +11,6 @@ const checklistNames: Record<ChecklistType, string> = {
   admin: 'Admin Daily Checklist',
   agm: 'AGM Daily Checklist',
   gm: 'GM Daily Checklist',
-  sales: 'Sales Daily Checklist',
-  housekeeping: 'Housekeeping Daily Checklist',
-  engineering: 'Engineering Daily Checklist',
 }
 
 export interface ChecklistSubmission {
@@ -125,11 +118,6 @@ export async function sendChecklistEmail(submission: ChecklistSubmission): Promi
   `
 
   try {
-    const resend = getResendClient()
-    if (!resend) {
-      return { success: false, error: 'RESEND_API_KEY is not configured' }
-    }
-
     const { error } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'Checklist System <onboarding@resend.dev>',
       to: recipientEmails,

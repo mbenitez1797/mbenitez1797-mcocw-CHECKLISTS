@@ -105,7 +105,7 @@ export function CheckboxGroup({
             </div>
             {showHelp && (
               <HelpTooltip 
-                instructions={getInstructions(option.id) || []} 
+                instructions={getInstructions(option.id)} 
                 title={option.label}
               />
             )}

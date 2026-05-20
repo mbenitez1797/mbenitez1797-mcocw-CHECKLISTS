@@ -36,17 +36,6 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "_AUTO_PATCH_BACKUPS",
-    "_disabled-routes",
-    "UPDATES",
-    "full",
-    "components/checklist-form.tsx",
-    "components/am-checklist-form.tsx",
-    "components/agm-checklist-form.tsx",
-    "components/admin-checklist-form.tsx",
-    "components/gm-checklist-form.tsx",
-    "components/night-checklist-form.tsx",
-    "components/sales-checklist-form.tsx"
+    "node_modules"
   ]
 }

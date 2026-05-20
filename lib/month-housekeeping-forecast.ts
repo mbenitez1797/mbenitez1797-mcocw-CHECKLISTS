@@ -69,24 +69,32 @@ export const FORECAST_ROOM_TOTALS: Record<ForecastRoomGroup, number> = {
 export const FORECAST_ROOM_GROUPS: ForecastRoomGroup[] = ["KING", "QNQN", "VIQN", "VIKG", "SUIT"]
 
 export const FORECAST_ROOM_CODES: Record<ForecastRoomGroup, string[]> = {
-  KING: ["RM1K0006", "RM1KA008", "RM1KA009"],
+  KING: ["RM1K0006", "RM1KA0008", "RM1KA0009"],
   QNQN: ["RM2Q0001"],
-  VIQN: ["RM2Q0002", "RM2QA003", "RM2QA004", "RM2QA005"],
+  VIQN: ["RM2Q0002", "RM2QA0003", "RM2QA0004", "RM2QA0005"],
   VIKG: ["RM1K0007"],
-  SUIT: ["SU1B0010", "SU1BA011"],
+  SUIT: ["SU1B0010", "SU1BA0011"],
 }
 
 export const FORECAST_ROOM_CODE_TOTALS: Record<string, number> = {
+  // Full room codes with proper inventory counts
   RM1K0006: 30,
-  RM1KA008: 8,
-  RM1KA009: 1,
+  RM1KA0008: 8,
+  RM1KA0009: 1,
   RM2Q0001: 16,
   RM2Q0002: 41,
+  RM2QA0003: 3,
+  RM2QA0004: 4,
+  RM2QA0005: 1,
+  RM1K0007: 3,
+  SU1B0010: 3,
+  SU1BA0011: 1,
+  // Short aliases (for PDF parsing compatibility)
+  RM1KA008: 8,
+  RM1KA009: 1,
   RM2QA003: 3,
   RM2QA004: 4,
   RM2QA005: 1,
-  RM1K0007: 3,
-  SU1B0010: 3,
   SU1BA011: 1,
 }
 
@@ -103,17 +111,17 @@ export const FORECAST_ROOM_TYPE_MAPPINGS: Array<Pick<ForecastRoomActivity, "grou
   },
   {
     group: "KING",
-    roomCode: "RM1KA008",
+    roomCode: "RM1KA0008",
     roomLabel: "Deluxe Room, 1 King Bed, Sofa bed, Hearing Accessible",
   },
   {
     group: "VIQN",
-    roomCode: "RM2QA003",
+    roomCode: "RM2QA0003",
     roomLabel: "Deluxe Room, 2 Queen Beds, Water View, Hearing Accessible",
   },
   {
     group: "VIQN",
-    roomCode: "RM2QA004",
+    roomCode: "RM2QA0004",
     roomLabel: "Deluxe Room, 2 Queen Beds, Water View, Mobility Accessible with Bathtub",
   },
   {
@@ -128,7 +136,7 @@ export const FORECAST_ROOM_TYPE_MAPPINGS: Array<Pick<ForecastRoomActivity, "grou
   },
   {
     group: "KING",
-    roomCode: "RM1KA009",
+    roomCode: "RM1KA0009",
     roomLabel: "Deluxe Room, 1 King Bed, Sofa bed, Mobility Accessible with Roll-In Shower",
   },
   {
@@ -138,35 +146,44 @@ export const FORECAST_ROOM_TYPE_MAPPINGS: Array<Pick<ForecastRoomActivity, "grou
   },
   {
     group: "VIQN",
-    roomCode: "RM2QA005",
+    roomCode: "RM2QA0005",
     roomLabel: "Deluxe Room, 2 Queen Beds, Water View, Mobility Accessible with Roll-In Shower",
   },
   {
     group: "SUIT",
-    roomCode: "SU1BA011",
+    roomCode: "SU1BA0011",
     roomLabel: "1 Bedroom Suite, 1 King Bed, Sitting Area, Sofa bed, Hearing Accessible, Mobility Accessible",
   },
 ]
 
 const FORECAST_ROOM_LABEL_BY_CODE = new Map(FORECAST_ROOM_TYPE_MAPPINGS.map(room => [room.roomCode, room.roomLabel]))
 
+// Room code aliases - includes both full codes and short codes (for PDF parsing flexibility)
 const ROOM_CODE_ALIASES: Record<string, ForecastRoomGroup> = {
+  // KING group (39 rooms total)
   RM1K0006: "KING",
+  RM1KA0008: "KING",
+  RM1KA0009: "KING",
+  // Short aliases for parsing
   RM1KA008: "KING",
   RM1KA009: "KING",
-  RM1KA008: "KING",
-  RM1KA009: "KING",
+  // QNQN group (16 rooms total)
   RM2Q0001: "QNQN",
+  // VIQN group (49 rooms total)
   RM2Q0002: "VIQN",
+  RM2QA0003: "VIQN",
+  RM2QA0004: "VIQN",
+  RM2QA0005: "VIQN",
+  // Short aliases for parsing
   RM2QA003: "VIQN",
   RM2QA004: "VIQN",
   RM2QA005: "VIQN",
-  RM2QA003: "VIQN",
-  RM2QA004: "VIQN",
-  RM2QA005: "VIQN",
+  // VIKG group (3 rooms total)
   RM1K0007: "VIKG",
+  // SUIT group (4 rooms total)
   SU1B0010: "SUIT",
-  SU1BA011: "SUIT",
+  SU1BA0011: "SUIT",
+  // Short alias for parsing
   SU1BA011: "SUIT",
 }
 

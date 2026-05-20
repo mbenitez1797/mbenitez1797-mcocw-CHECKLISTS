@@ -3,9 +3,9 @@ export const ROOM_TOTAL = 111
 export type RoomBucket = {
   KING: number
   VIKG: number
-  QUEEN: number
+  QUEEN: number  // Maps to QNQN group
   VIQN: number
-  SUITES: number
+  SUITES: number // Maps to SUIT group
 }
 
 export type DailyInventorySnapshot = {
@@ -27,12 +27,37 @@ export type DailyInventorySnapshot = {
 
 export const DAILY_INVENTORY_STORAGE_KEY = "daily-inventory-snapshot"
 
+// Fixed inventory totals per room group (property has 111 total rooms)
+// KING = 39, QNQN = 16, VIQN = 49, VIKG = 3, SUIT = 4
+export const ROOM_GROUP_TOTALS: Record<keyof RoomBucket, number> = {
+  KING: 39,    // RM1K0006=30, RM1KA0008=8, RM1KA0009=1
+  VIKG: 3,     // RM1K0007=3
+  QUEEN: 16,   // RM2Q0001=16 (QNQN group)
+  VIQN: 49,    // RM2Q0002=41, RM2QA0003=3, RM2QA0004=4, RM2QA0005=1
+  SUITES: 4,   // SU1B0010=3, SU1BA0011=1 (SUIT group)
+}
+
+// Room code to inventory total mapping
+export const ROOM_CODE_INVENTORY: Record<string, number> = {
+  RM1K0006: 30,
+  RM1KA0008: 8,
+  RM1KA0009: 1,
+  RM2Q0001: 16,
+  RM2Q0002: 41,
+  RM2QA0003: 3,
+  RM2QA0004: 4,
+  RM2QA0005: 1,
+  RM1K0007: 3,
+  SU1B0010: 3,
+  SU1BA0011: 1,
+}
+
 export const ROOM_TYPE_MAP: Record<keyof RoomBucket, string[]> = {
-  KING: ["RM1K0006", "RM1KA008", "RM1KA009"],
+  KING: ["RM1K0006", "RM1KA0008", "RM1KA0009"],
   VIKG: ["RM1K0007"],
   QUEEN: ["RM2Q0001"],
-  VIQN: ["RM2Q0002", "RM2QA003", "RM2QA004", "RM2QA005"],
-  SUITES: ["SU1B0010", "SU1BA011"],
+  VIQN: ["RM2Q0002", "RM2QA0003", "RM2QA0004", "RM2QA0005"],
+  SUITES: ["SU1B0010", "SU1BA0011"],
 }
 
 export const emptyRooms = (): RoomBucket => ({
@@ -47,12 +72,42 @@ export function totalAvailableRooms(rooms: RoomBucket) {
   return rooms.KING + rooms.VIKG + rooms.QUEEN + rooms.VIQN + rooms.SUITES
 }
 
+/**
+ * Calculate occupied rooms: Occupied = Arrivals + Stayovers
+ * Departures should NOT be counted as occupied for tonight's availability.
+ */
+export function calculateOccupied(arrivals: number, stayovers: number) {
+  return Math.max(0, arrivals + stayovers)
+}
+
+/**
+ * Calculate available rooms: Available = Fixed Inventory Total - Occupied
+ * Note: Stayovers should come from the forecast data, not calculated from departures.
+ */
+export function calculateAvailable(inventoryTotal: number, arrivals: number, stayovers: number) {
+  const occupied = calculateOccupied(arrivals, stayovers)
+  return inventoryTotal - occupied
+}
+
+/**
+ * @deprecated Stayovers should come from forecast data, not calculated from departures.
+ * Keeping for backwards compatibility but prefer using forecast stayovers directly.
+ */
 export function calculateStayovers(departures: number) {
   return Math.max(0, ROOM_TOTAL - departures)
 }
 
 export function calculateOccupancy(available: number) {
   return `${(((ROOM_TOTAL - available) / ROOM_TOTAL) * 100).toFixed(1)}%`
+}
+
+/**
+ * Calculate occupancy percentage from arrivals and stayovers directly.
+ * Occupied = Arrivals + Stayovers, Occupancy % = (Occupied / Total) * 100
+ */
+export function calculateOccupancyFromActivity(arrivals: number, stayovers: number) {
+  const occupied = calculateOccupied(arrivals, stayovers)
+  return `${((occupied / ROOM_TOTAL) * 100).toFixed(1)}%`
 }
 
 export function saveDailyInventory(snapshot: DailyInventorySnapshot) {

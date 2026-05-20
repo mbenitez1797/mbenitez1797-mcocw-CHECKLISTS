@@ -13,23 +13,28 @@ export type RoomAvailabilityParseResult = {
 }
 
 const ROOM_CODE_GROUPS: Record<string, ForecastRoomGroup | "IGNORE"> = {
+  // KING group (39 rooms: 30+8+1)
   RM1K0006: "KING",
-  RM1K0007: "VIKG",
   RM1KA0008: "KING",
-  RM1KA008: "KING",
+  RM1KA008: "KING",  // Short alias
   RM1KA0009: "KING",
-  RM1KA009: "KING",
+  RM1KA009: "KING",  // Short alias
+  // QNQN group (16 rooms)
   RM2Q0001: "QNQN",
+  // VIQN group (49 rooms: 41+3+4+1)
   RM2Q0002: "VIQN",
   RM2QA0003: "VIQN",
-  RM2QA003: "VIQN",
+  RM2QA003: "VIQN",  // Short alias
   RM2QA0004: "VIQN",
-  RM2QA004: "VIQN",
+  RM2QA004: "VIQN",  // Short alias
   RM2QA0005: "VIQN",
-  RM2QA005: "VIQN",
+  RM2QA005: "VIQN",  // Short alias
+  // VIKG group (3 rooms)
+  RM1K0007: "VIKG",
+  // SUIT group (4 rooms: 3+1)
   SU1B0010: "SUIT",
   SU1BA0011: "SUIT",
-  SU1BA011: "SUIT",
+  SU1BA011: "SUIT",  // Short alias
   ROH: "IGNORE",
 }
 

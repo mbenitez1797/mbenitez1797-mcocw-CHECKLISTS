@@ -45,6 +45,10 @@ function chunkWeeks(days: ForecastDay[]) {
   return weeks
 }
 
+function groupsSum() {
+  return FORECAST_ROOM_GROUPS.reduce((sum, group) => sum + FORECAST_ROOM_TOTALS[group], 0)
+}
+
 function recalculateDay(day: ForecastDay): ForecastDay {
   const groups = { ...day.groups } as ForecastDay["groups"]
 
